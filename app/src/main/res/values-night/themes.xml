@@ -1,0 +1,4 @@
+<resources>
+    <style name="Base.Theme.Metospherus" parent="Theme.Material3.Dark.NoActionBar">
+    </style>
+</resources>

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "670538789243",
+    "firebase_url": "https://metospherus-kit-default-rtdb.firebaseio.com",
+    "project_id": "metospherus-kit",
+    "storage_bucket": "metospherus-kit.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:670538789243:android:fecefa5119bf59b97b0dde",
+        "android_client_info": {
+          "package_name": "metospherus.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "670538789243-9omi4auan21doruq3c0duhnj0o3dsebu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQF4t92hZ8e9g-DPRqaOLufykzk8wkg5c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "670538789243-9omi4auan21doruq3c0duhnj0o3dsebu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

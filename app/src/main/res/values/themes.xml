@@ -1,0 +1,6 @@
+<resources>
+    <style name="Base.Theme.Metospherus" parent="Theme.Material3.Light.NoActionBar">
+    </style>
+
+    <style name="Theme.Metospherus" parent="Base.Theme.Metospherus" />
+</resources>
