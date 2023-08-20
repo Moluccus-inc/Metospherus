@@ -7,4 +7,3 @@ Metospherus: Revolutionizing Healthcare with a Comprehensive Medical System
   - [X, Y, Z]
   - [X, Y, Z]
   - [X, Y, Z]
-  - [X, Y, Z]
