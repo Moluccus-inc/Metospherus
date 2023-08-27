@@ -95,6 +95,12 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
 
+tasks.register("generateVersionTxt") {
+    doLast {
+        android.defaultConfig.versionName?.let { file("./version.txt").writeText(it) }
+    }
+}
+
 tasks.register("assembleRelease2") {
     group = "assemble"
     description = "Assembles a release build"
