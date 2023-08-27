@@ -11,20 +11,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
+
+      - name: Set Git user identity
+        run: |
+          git config --global user.email "la.niina.me@gmail.com"
+          git config --global user.name "la-niina"
+
       - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
           java-version: '17'
           distribution: 'adopt'
-          
+
       - uses: actions/cache@v2
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-            
+
       - name: Build and tag version
         run: |
           chmod +x gradlew
