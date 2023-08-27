@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="date_layout">
+        <item>Day</item>
+        <item>Week</item>
+        <item>Month</item>
+    </string-array>
+
+    <string-array name="medicine_amount">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+    </string-array>
+
+    <string-array name="metospherus_account_type">
+        <item>Patient</item>
+        <item>Doctor</item>
+        <item>Nurse</item>
+        <item>Health Department</item>
+        <item>Medical Professional</item>
+        <item>Dispensary Or Sickbay</item>
+        <item>Hospital</item>
+        <item>Pharmacy</item>
+        <item>Laboratory</item>
+    </string-array>
+
+    <string-array name="country_code_picker">
+        <item>Uganda</item>
+        <item>Tanzania</item>
+        <item>United States</item>
+        <item>Kenya</item>
+        <item>Canada</item>
+        <item>Rwanda</item>
+        <item>Burundi</item>
+        <item>South Africa</item>
+    </string-array>
+</resources>

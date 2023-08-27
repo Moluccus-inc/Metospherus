@@ -14,3 +14,11 @@ class App : Application() {
         DynamicColors.applyToActivitiesIfAvailable(this)
     }
 }
+
+/**
+// Encrypt data before storing it in the database
+val encryptedData = encryptionUtils.encrypt("sensitive_data")
+
+// Decrypt data when you need to use it
+val decryptedData = encryptionUtils.decrypt(encryptedData)
+ **/

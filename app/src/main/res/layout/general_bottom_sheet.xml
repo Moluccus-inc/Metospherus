@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bottomsheet_design"
+    android:orientation="vertical">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp">
+        <ImageView
+            android:id="@+id/closeBottomSheet"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/round_close"/>
+
+        <TextView
+            android:id="@+id/titleBottomSheet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:hint="@string/app_name"
+            android:textSize="23sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <include
+        android:id="@+id/container_medical_intake"
+        android:visibility="gone"
+        layout="@layout/container_medical_intake"/>
+
+    <include
+        android:id="@+id/container_period_tracker"
+        android:visibility="visible"
+        layout="@layout/period_tracking_layout"/>
+</LinearLayout>

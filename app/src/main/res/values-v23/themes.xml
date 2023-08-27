@@ -3,5 +3,6 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
+        <item name="md_background_color">?android:windowBackground</item>
     </style>
 </resources>

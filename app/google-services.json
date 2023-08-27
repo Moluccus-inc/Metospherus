@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "670538789243-ubrirkcstk57rjafumfjajlvkekclg3d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "metospherus.app",
+            "certificate_hash": "42915476b461309535a7d97e5cf9bedb2ee6cfbf"
+          }
+        },
+        {
           "client_id": "670538789243-9omi4auan21doruq3c0duhnj0o3dsebu.apps.googleusercontent.com",
           "client_type": 3
         }
