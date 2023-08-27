@@ -1,5 +1,4 @@
 name: Android CI
-
 on:
   push:
     branches:
@@ -17,7 +16,6 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '17'
-          distribution: 'corretto'
           
       - uses: actions/cache@v2
         with:
