@@ -29,7 +29,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease
-          versionCode=$(grep "versionCode" app/build.gradle | grep -o "[0-9]*")
+          versionCode=$(grep "versionCode" app/build.gradle.kts | grep -o "[0-9]*")
           echo "Version Code: $versionCode"
           git tag -a "v$versionCode" -m "Release version $versionCode"
           git push --tags
