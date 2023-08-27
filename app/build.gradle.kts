@@ -17,13 +17,10 @@ android {
         //noinspection EditedTargetSdkVersion
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0.0"
+        versionName = "1.0.1"
 
         vectorDrawables {
             useSupportLibrary = true
-        }
-        ksp {
-            arg("room.incremental", "true")
         }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -36,6 +33,9 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

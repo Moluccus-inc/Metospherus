@@ -19,4 +19,8 @@
     <string name="you_are_in_latest_version">Your Metospherus Client Is UpToDate</string>
     <string name="couldnt_find_apk">Couldn\'t Find Update</string>
     <string name="downloading_update">Downloading Update</string>
+    <string name="warning">Warning</string>
+    <string name="request_permission_desc">This app needs this permission on your device</string>
+    <string name="exit_app">exit</string>
+    <string name="ok">ok</string>
 </resources>

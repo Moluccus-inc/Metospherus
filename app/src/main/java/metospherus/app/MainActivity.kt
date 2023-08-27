@@ -7,6 +7,11 @@ import android.text.TextWatcher
 import android.view.ViewGroup
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.DialogInterface
+import android.content.Intent
+import android.content.SharedPreferences
+import android.net.Uri
+import android.provider.Settings
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import androidx.appcompat.app.AppCompatActivity
@@ -16,9 +21,11 @@ import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
+import androidx.preference.PreferenceManager
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
@@ -34,8 +41,11 @@ import kotlinx.coroutines.launch
 import metospherus.app.databinding.ActivityMainBinding
 import metospherus.app.update.UpdateUtil
 import metospherus.app.utilities.MoluccusToast
+import java.lang.System.exit
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlin.system.exitProcess
+
 class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var navController: NavController
@@ -43,6 +53,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseDatabase
+
+    private lateinit var preferences: SharedPreferences
+    private lateinit var sharedPreferences: SharedPreferences
 
     private val PERMISSIONS_REQUEST_CODE = 1001
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,15 +66,16 @@ class MainActivity : AppCompatActivity() {
         auth = Firebase.auth
         db = FirebaseDatabase.getInstance()
 
+        preferences = PreferenceManager.getDefaultSharedPreferences(this)
         navController = findNavController(R.id.nav_host_fragment_content_main)
         appBarConfiguration = AppBarConfiguration(navController.graph)
+
+        checkUpdate()
     }
 
     @SuppressLint("InlinedApi")
     override fun onStart() {
         super.onStart()
-        checkUpdate()
-
         when {
             auth.currentUser != null -> {
                 val usrDb = db.getReference("participants").child(auth.currentUser!!.uid)
@@ -177,18 +191,31 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PERMISSIONS_REQUEST_CODE) {
-            when {
-                grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED -> {
-                    // Permission granted, proceed with camera initialization
-                }
-
-                else -> {
-                    MoluccusToast(this).showInformation( "Permission Denied")
-                }
+        for (i in permissions.indices) {
+            if (permissions.contains(Manifest.permission.POST_NOTIFICATIONS)) continue
+            if (grantResults[i] == PackageManager.PERMISSION_DENIED) {
+                createPermissionRequestDialog()
             }
         }
     }
+
+    private fun createPermissionRequestDialog() {
+        val dialog = MaterialAlertDialogBuilder(this)
+        dialog.setTitle(getString(R.string.warning))
+        dialog.setMessage(getString(R.string.request_permission_desc))
+        dialog.setOnCancelListener { exitProcess(0) }
+        dialog.setNegativeButton(getString(R.string.exit_app)) { _: DialogInterface?, _: Int -> exitProcess(0) }
+        dialog.setPositiveButton(getString(R.string.ok)) { _: DialogInterface?, _: Int ->
+            val intent = Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", packageName, null)
+            )
+            startActivity(intent)
+            exitProcess(0)
+        }
+        dialog.show()
+    }
+
     private fun initCompleteUserProfile(usrDb: DatabaseReference) {
         MaterialDialog(this).show {
             customView(R.layout.activity_complete_user_profile)
@@ -312,10 +339,11 @@ class MainActivity : AppCompatActivity() {
         return email.matches(emailPattern.toRegex())
     }
     private fun checkUpdate() {
-        /**if (preferences.getBoolean("update_app", false)) {}**/
-        val updateUtil = UpdateUtil(this)
-        lifecycleScope.launch(Dispatchers.IO){
-            updateUtil.updateApp{}
+        if (preferences.getBoolean("update_app", true)) {
+            val updateUtil = UpdateUtil(this)
+            lifecycleScope.launch(Dispatchers.IO){
+                updateUtil.updateApp{}
+            }
         }
     }
 

@@ -71,7 +71,7 @@ class UpdateUtil(var context: Context) {
     }
 
     private fun checkForAppUpdate(): JSONObject {
-        val url = "https://api.github.com/repos/Moluccus-inc/Metospherus/releases/latest"
+        val url = "https://api.github.com/repos/deniscerri/ytdlnis/releases/latest"
         val reader: BufferedReader
         var line: String?
         val responseContent = StringBuilder()
