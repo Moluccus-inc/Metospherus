@@ -34,7 +34,13 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease
-          versionCode=$(grep "versionCode" app/build.gradle.kts | grep -o "[0-9]*")
-          echo "Version Code: $versionCode"
-          git tag -a "v$versionCode" -m "Release version $versionCode"
+          versionName=$(grep "versionName" app/build.gradle.kts | grep -o "[0-9]*")
+          echo "versionName: $versionName"
+          git tag -a "v$versionName" -m "Release version $versionName"
           git push --tags
+
+      - name: Generate release notes
+        uses: mikepenz/release-notes-generator-action@v2.1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
