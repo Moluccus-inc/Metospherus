@@ -94,3 +94,9 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
+
+tasks.register("generateVersionTxt") {
+    doLast {
+        android.defaultConfig.versionName?.let { file("./version.txt").writeText(it) }
+    }
+}
