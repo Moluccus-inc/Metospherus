@@ -100,3 +100,16 @@ tasks.register("generateVersionTxt") {
         android.defaultConfig.versionName?.let { file("./version.txt").writeText(it) }
     }
 }
+
+tasks.register("assembleRelease2") {
+    group = "assemble"
+    description = "Assembles a release build"
+
+    dependsOn("assemble")
+    doLast {
+        copy {
+            from("${project.buildDir}/outputs/apk/release/app-release.apk")
+            into("${project.buildDir}/assets/")
+        }
+    }
+}

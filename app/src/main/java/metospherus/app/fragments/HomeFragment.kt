@@ -95,13 +95,14 @@ class HomeFragment : Fragment() {
 
     private val selectedImageLiveData = MutableLiveData<Uri>()
 
-    private val imguriholder = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uris ->
-        if (uris != null) {
-            selectedImageLiveData.value = uris
-        } else {
-            Log.d("PhotoPicker", "No media selected")
+    private val imguriholder =
+        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uris ->
+            if (uris != null) {
+                selectedImageLiveData.value = uris
+            } else {
+                Log.d("PhotoPicker", "No media selected")
+            }
         }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -154,37 +155,46 @@ class HomeFragment : Fragment() {
         }
 
     }
+
     private fun initializeCatagories() {
         val trackerInstance = mutableListOf(
             GeneralCategory(
                 "Documents",
                 R.drawable.medical_documents,
+                true
             ),
             GeneralCategory(
                 "Pharmacy",
                 R.drawable.pharmacies,
+                false
             ),
             GeneralCategory(
                 "Hospital",
                 R.drawable.hospital,
+                false
             ),
             GeneralCategory(
                 "Professionals",
                 R.drawable.medical_team,
+                false
             ),
             GeneralCategory(
                 "Delivery",
                 R.drawable.delivery,
+                false
             ),
             GeneralCategory(
                 "Others",
                 R.drawable.others,
+                false
             ),
         )
 
         categoryAdapter.setData(trackerInstance)
         recylerCatagories.adapter = categoryAdapter
+
     }
+
     private fun initializeTracker() {
         val patientGeneralModulesDB = db.getReference("medicalmodules").child("modules")
         patientGeneralModulesDB.keepSynced(true)
@@ -207,6 +217,7 @@ class HomeFragment : Fragment() {
             }
         })
     }
+
     @OptIn(DelicateCoroutinesApi::class)
     private fun initProfileSheetIfNeeded() {
         GlobalScope.launch(Dispatchers.Main) {
@@ -215,7 +226,8 @@ class HomeFragment : Fragment() {
                 cornerRadius(20f)
                 cancelOnTouchOutside(false)
 
-                val profileActionLayout = view.findViewById<MaterialCardView>(R.id.profileActionLayout)
+                val profileActionLayout =
+                    view.findViewById<MaterialCardView>(R.id.profileActionLayout)
                 val closeHolder = view.findViewById<ImageView>(R.id.closeHolder)
                 val profileImage = view.findViewById<ImageView>(R.id.profileImage)
 
@@ -238,9 +250,13 @@ class HomeFragment : Fragment() {
                     profileDetails.addValueEventListener(object : ValueEventListener {
                         override fun onDataChange(snapshot: DataSnapshot) {
 
-                            prefName.text = snapshot.child("name").getValue(String::class.java) ?: "Unknown"
-                            profileHandler.text = snapshot.child("handle").getValue(String::class.java) ?: "Unknown"
-                            profileType.text = snapshot.child("accountType").getValue(String::class.java) ?: "Unknown Type"
+                            prefName.text =
+                                snapshot.child("name").getValue(String::class.java) ?: "Unknown"
+                            profileHandler.text =
+                                snapshot.child("handle").getValue(String::class.java) ?: "Unknown"
+                            profileType.text =
+                                snapshot.child("accountType").getValue(String::class.java)
+                                    ?: "Unknown Type"
 
                             Glide.with(requireContext())
                                 .load(snapshot.child("avatar").getValue(String::class.java))
@@ -266,6 +282,7 @@ class HomeFragment : Fragment() {
             }
         }
     }
+
     @SuppressLint("SetTextI18n")
     private fun initBottomSheetsIfNeeded() {
         MaterialDialog(requireContext(), BottomSheet(LayoutMode.WRAP_CONTENT)).show {
@@ -461,8 +478,10 @@ class HomeFragment : Fragment() {
                                                     }
                                                 } else {
                                                     //Log.w(TAG, "signInWithCredential:failure", task.exception)
-                                                    if (task.exception is FirebaseAuthInvalidCredentialsException) {
-                                                        // The verification code entered was invalid
+                                                    when (task.exception) {
+                                                        is FirebaseAuthInvalidCredentialsException -> {
+                                                            // The verification code entered was invalid
+                                                        }
                                                     }
                                                 }
                                             }
@@ -498,6 +517,7 @@ class HomeFragment : Fragment() {
             }
         }
     }
+
     @SuppressLint("Recycle", "Range")
     private fun initBottomSheets() {
         MaterialDialog(requireContext(), BottomSheet(LayoutMode.WRAP_CONTENT)).show {
@@ -511,13 +531,15 @@ class HomeFragment : Fragment() {
                     cornerRadius(literalDp = 20f)
 
                     val documentTitle = view.findViewById<TextInputEditText>(R.id.documentTitle)
-                    val shortDescription = view.findViewById<TextInputEditText>(R.id.shortDescription)
-                    val medicalFacilityName = view.findViewById<TextInputEditText>(R.id.medicalFacilityName)
+                    val shortDescription =
+                        view.findViewById<TextInputEditText>(R.id.shortDescription)
+                    val medicalFacilityName =
+                        view.findViewById<TextInputEditText>(R.id.medicalFacilityName)
                     val uploadFileOrImage = view.findViewById<ImageView>(R.id.uploadFileOrImage)
                     imageHolder = view.findViewById(R.id.imageHolder)
 
                     uploadFileOrImage.setOnClickListener {
-                       imguriholder.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        imguriholder.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     }
 
                     selectedImageLiveData.observe(viewLifecycleOwner) { selectedImageUri ->
@@ -552,13 +574,14 @@ class HomeFragment : Fragment() {
                                         var fileName: String? = null
                                         when {
                                             selectedImageUri.scheme.equals("content") -> {
-                                                val cursor: Cursor? = requireContext().contentResolver.query(
-                                                    selectedImageUri,
-                                                    null,
-                                                    null,
-                                                    null,
-                                                    null
-                                                )
+                                                val cursor: Cursor? =
+                                                    requireContext().contentResolver.query(
+                                                        selectedImageUri,
+                                                        null,
+                                                        null,
+                                                        null,
+                                                        null
+                                                    )
                                                 try {
                                                     if (cursor != null && cursor.moveToFirst()) {
                                                         fileName = cursor.getString(
@@ -581,21 +604,30 @@ class HomeFragment : Fragment() {
                                                 }
                                             }
                                         }
-                                        val extension = fileName?.substring(fileName.lastIndexOf(".") + 1)
+                                        val extension =
+                                            fileName?.substring(fileName.lastIndexOf(".") + 1)
 
-                                        val imageRef = storageRef.child("MedicalDocuments/$uid/${documentTitle}.$extension")
+                                        val imageRef =
+                                            storageRef.child("MedicalDocuments/$uid/${documentTitle}.$extension")
                                         val uploadTask = imageRef.putFile(selectedImageUri)
                                         uploadTask.addOnSuccessListener {
                                             imageRef.downloadUrl.addOnSuccessListener { uri ->
 
-                                                val startTimestamp = System.currentTimeMillis() / 1000 // Get current timestamp in seconds
-                                                val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                                                val startTimestamp =
+                                                    System.currentTimeMillis() / 1000 // Get current timestamp in seconds
+                                                val dateFormat = SimpleDateFormat(
+                                                    "MMM dd, yyyy",
+                                                    Locale.getDefault()
+                                                )
 
-                                                val date = dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
+                                                val date =
+                                                    dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
 
                                                 val medicalRecord = mapOf(
-                                                    "documentTitle" to documentTitle.text!!.trim().toString(),
-                                                    "documentShortDescription" to shortDescription.text!!.trim().toString(),
+                                                    "documentTitle" to documentTitle.text!!.trim()
+                                                        .toString(),
+                                                    "documentShortDescription" to shortDescription.text!!.trim()
+                                                        .toString(),
                                                     "documentDate" to date.toString(),
                                                     "documentSyncStatus" to "Synced",
                                                     "documentPreview" to uri.toString()
@@ -606,7 +638,9 @@ class HomeFragment : Fragment() {
                                                     .setValue(medicalRecord)
                                                     .addOnCanceledListener {
                                                         dismiss()
-                                                        MoluccusToast(requireContext()).showInformation("SuccuessFully Added To Cloud")
+                                                        MoluccusToast(requireContext()).showInformation(
+                                                            "SuccuessFully Added To Cloud"
+                                                        )
                                                     }
                                             }.addOnFailureListener { exception ->
                                                 Log.e(
@@ -628,6 +662,7 @@ class HomeFragment : Fragment() {
             }
         }
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

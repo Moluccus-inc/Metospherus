@@ -166,14 +166,14 @@ class ProfileFragment : Fragment() {
             val userHeightInput = view.findViewById<TextInputEditText>(R.id.userHeightInput)
 
             val dateOfBirthInput = view.findViewById<TextInputEditText>(R.id.dateOfBirthInput)
-            val faEnableCheckBox = view.findViewById<MaterialCheckBox>(R.id.faEnableCheckBox)
+           // val faEnableCheckBox = view.findViewById<MaterialCheckBox>(R.id.faEnableCheckBox)
 
             imgAvatar = view.findViewById(R.id.imgAvatar)
             val imgUpload = view.findViewById<TextView>(R.id.imgUpload)
 
-            faEnableCheckBox.setOnCheckedChangeListener { compoundButton, b ->
+           /** faEnableCheckBox.setOnCheckedChangeListener { compoundButton, b ->
                 // to do
-            }
+            } **/
 
 
             imgUpload.setOnClickListener {
@@ -259,7 +259,9 @@ class ProfileFragment : Fragment() {
                         val parsedDate = dateFormat.parse(existingDate)
 
                         val selectedCalendar = Calendar.getInstance()
-                        selectedCalendar.time = parsedDate
+                        if (parsedDate != null) {
+                            selectedCalendar.time = parsedDate
+                        }
                         builder.setSelection(selectedCalendar.timeInMillis)
                     }
 
@@ -303,20 +305,20 @@ class ProfileFragment : Fragment() {
     }
 
     private fun updateFirebaseDatabase(id: String, value: String) {
-        if (value != "null" && value != null && value != "Not Set") {
+        if (value != "null" && value != "Not Set") {
             val uid = auth.uid
             val databaseRef = db.getReference("participants/$uid")
             databaseRef.child(id).setValue(value)
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun fetchAddress(homeAddress: TextInputEditText) {
         val latitude = 0.0
         val longitude = 0.0
         val geocoder = Geocoder(requireActivity(), Locale.getDefault())
         try {
-            val addresses: List<Address> =
-                geocoder.getFromLocation(latitude, longitude, 1) as List<Address>
+            val addresses: List<Address> = geocoder.getFromLocation(latitude, longitude, 1) as List<Address>
             if (addresses.isNotEmpty()) {
                 val address: Address = addresses[0]
                 val formattedAddress = address.getAddressLine(0)

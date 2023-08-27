@@ -14,6 +14,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import metospherus.app.R
 
+@Suppress("DEPRECATION")
 class AlertReceiver : BroadcastReceiver() {
 
     @RequiresApi(Build.VERSION_CODES.O)

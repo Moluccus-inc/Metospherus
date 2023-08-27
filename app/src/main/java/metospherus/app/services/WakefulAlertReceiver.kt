@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.legacy.content.WakefulBroadcastReceiver
 
+@Suppress("DEPRECATION")
 class WakefulAlertReceiver : WakefulBroadcastReceiver() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onReceive(context: Context, intent: Intent) {

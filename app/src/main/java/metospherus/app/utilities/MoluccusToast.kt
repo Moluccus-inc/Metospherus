@@ -1,5 +1,6 @@
 package metospherus.app.utilities
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
@@ -10,10 +11,12 @@ import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
 import metospherus.app.R
 
+@Suppress("DEPRECATION")
 class MoluccusToast(private val context: Context) {
 
     private val toastQueue: MutableList<Toast> = mutableListOf()
 
+    @SuppressLint("InflateParams")
     private fun showToast(
         title: String,
         message: String,
