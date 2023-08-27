@@ -35,7 +35,8 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
           versionName=$(grep "versionName" app/build.gradle.kts | grep -o "[0-9]*")
-          echo "versionName: $versionName"
+          versionName=$(echo $versionName | tr -d '\n') # Remove newline characters
+          echo "Version Name: $versionName"
           git tag -a "v$versionName" -m "Release version $versionName"
           git push --tags
 
