@@ -13,7 +13,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.MimeTypeMap
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
@@ -77,7 +76,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
@@ -92,6 +90,9 @@ class HomeFragment : Fragment() {
     private lateinit var db: FirebaseDatabase
     private lateinit var appDatabase: AppDatabase
     private lateinit var imageHolder: ImageView
+    private lateinit var resendToken: PhoneAuthProvider.ForceResendingToken
+    private lateinit var storedVerificationId: String
+
     private val selectedImageLiveData = MutableLiveData<Uri>()
 
     private val imguriholder = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uris ->
@@ -352,8 +353,6 @@ class HomeFragment : Fragment() {
                 }
             }
 
-            var resendToken: PhoneAuthProvider.ForceResendingToken
-            lateinit var storedVerificationId: String
             val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
                 @RequiresApi(Build.VERSION_CODES.O)
                 override fun onVerificationCompleted(credential: PhoneAuthCredential) {

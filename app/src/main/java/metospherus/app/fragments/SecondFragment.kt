@@ -1,12 +1,10 @@
 package metospherus.app.fragments
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.navigation.fragment.findNavController
-import metospherus.app.R
+import androidx.fragment.app.Fragment
 import metospherus.app.databinding.FragmentSecondBinding
 
 class SecondFragment : Fragment() {

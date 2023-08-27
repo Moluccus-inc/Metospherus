@@ -1,7 +1,6 @@
 package metospherus.app.fragments
 
 import android.annotation.SuppressLint
-import android.app.DatePickerDialog
 import android.location.Address
 import android.location.Geocoder
 import android.net.Uri
@@ -9,7 +8,6 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -19,8 +17,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.withContext
 import androidx.navigation.fragment.findNavController
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
@@ -41,10 +39,10 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import metospherus.app.R
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.database.profile_data.Profiles
-import metospherus.app.databinding.FragmentHomeBinding
 import metospherus.app.databinding.FragmentProfileBinding
 import metospherus.app.utilities.Constructor.getUserProfilesFromDatabase
 import metospherus.app.utilities.MoluccusToast

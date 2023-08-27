@@ -1,17 +1,17 @@
 package metospherus.app
 
-import android.content.pm.PackageManager
-import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
-import android.view.ViewGroup
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Bundle
 import android.provider.Settings
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import androidx.appcompat.app.AppCompatActivity
@@ -41,7 +41,6 @@ import kotlinx.coroutines.launch
 import metospherus.app.databinding.ActivityMainBinding
 import metospherus.app.update.UpdateUtil
 import metospherus.app.utilities.MoluccusToast
-import java.lang.System.exit
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.system.exitProcess
@@ -55,7 +54,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var db: FirebaseDatabase
 
     private lateinit var preferences: SharedPreferences
-    private lateinit var sharedPreferences: SharedPreferences
 
     private val PERMISSIONS_REQUEST_CODE = 1001
     override fun onCreate(savedInstanceState: Bundle?) {
