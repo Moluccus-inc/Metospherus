@@ -36,8 +36,7 @@ jobs:
           ./gradlew assembleRelease
           versionName=$(grep "versionName" app/build.gradle.kts | grep -o "\"[^\"]*\"" | tr -d '"')
           echo "Version Name: $versionName"
-          echo "$versionName" > version.txt
-          git tag -a "v$versionName" -F version.txt
+          git tag -a "v$versionName" -m "Release version $versionName"
           git push --tags
 
       - name: Generate release notes
