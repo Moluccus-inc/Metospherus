@@ -40,7 +40,7 @@ jobs:
           git push --tags
 
       - name: Generate release notes
-        uses: mikepenz/release-notes-generator-action@v2.1.0
+        uses: Decathlon/release-notes-generator-action@v3.1.6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref }}
