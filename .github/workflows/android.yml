@@ -39,8 +39,9 @@ jobs:
           git tag -a "v$versionName" -m "Release version $versionName"
           git push --tags
 
-      - name: Generate release notes
-        uses: Decathlon/release-notes-generator-action@v3.1.6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.ref }}
+      - name: Create Release Notes
+        uses: docker://decathlon/release-notes-generator-action:2.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USE_MILESTONE_TITLE: "true"
+          FILENAME: ProvidedFilename
