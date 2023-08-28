@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
       - name: Set Git user identity
         run: |
           git config --global user.email "la.niina.me@gmail.com"
@@ -29,7 +28,7 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-
+  steps:
       - name: Build and tag version
         run: |
           chmod +x gradlew
@@ -38,9 +37,9 @@ jobs:
           echo "Version Name: $versionName"
           git tag -a "v$versionName" -m "Release version $versionName"
           git push --tags
-
+steps:
       - name: Upload release artifact
         uses: actions/upload-artifact@v3
         with:
-          name: app-release.apk
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          name: metospherus.apk
+          path: app/build/outputs/apk/release/metospherus-release.apk

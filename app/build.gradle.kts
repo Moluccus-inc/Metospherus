@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -6,6 +8,20 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("/Users/laniina/StudioProjects/Metospherus/key/metospherus.jks")
+            storePassword = rootProject.extra["psw"] as String
+            keyAlias = rootProject.extra["key"] as String
+            keyPassword = rootProject.extra["psw"] as String
+        }
+        create("release") {
+            storeFile = file("/Users/laniina/StudioProjects/Metospherus/key/metospherus.jks")
+            storePassword = rootProject.extra["psw"] as String
+            keyAlias = rootProject.extra["key"] as String
+            keyPassword = rootProject.extra["psw"] as String
+        }
+    }
     namespace = "metospherus.app"
     compileSdk = 34
 
@@ -17,21 +33,32 @@ android {
         //noinspection EditedTargetSdkVersion
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0.2"
+        versionName = "1.0.3"
 
         vectorDrawables {
             useSupportLibrary = true
         }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        archivesName.set("metospherus")
     }
 
     buildTypes {
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("release")
+        }
+        debug {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            isDebuggable = true
         }
     }
     ksp {
@@ -43,6 +70,11 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
     }
     buildFeatures {
         viewBinding = true
