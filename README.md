@@ -55,7 +55,7 @@ We invite the community to contribute to the evolution of Metospherus:
 
 ## Developers
 
-- [Your Name](https://github.com/yourusername) - Connect with me on GitHub: [@yourusername](https://github.com/yourusername)
+- [la niina](https://github.com/la-niina) - Connect with me on GitHub: [@la-niina](https://github.com/la-niina)
 
 Metospherus is more than an app; it's a revolution in healthcare technology. Join us in shaping the future of healthcare accessibility and effectiveness.
 
