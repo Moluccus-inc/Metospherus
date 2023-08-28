@@ -35,6 +35,7 @@ import com.afollestad.materialdialogs.customview.customView
 import com.bumptech.glide.Glide
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.FirebaseException
@@ -154,7 +155,6 @@ class HomeFragment : Fragment() {
         }
 
     }
-
     private fun initializeCatagories() {
         val categoriesGeneralModulesDB = db.getReference("medicalmodules").child("Categories")
         categoriesGeneralModulesDB.keepSynced(true)
@@ -281,12 +281,26 @@ class HomeFragment : Fragment() {
             val codeInputLayout = view.findViewById<LinearLayoutCompat>(R.id.codeInputLayout)
             val otpView = view.findViewById<OtpTextView>(R.id.otp_view)
             val enterOTP = view.findViewById<TextView>(R.id.enterOTP)
+            val createAccountConsent = view.findViewById<MaterialCheckBox>(R.id.createAccountConsent)
+            val resendTokeOpt = view.findViewById<TextView>(R.id.resendTokeOpt)
 
             val phoneNumberButton = view.findViewById<MaterialButton>(R.id.phoneNumberButton)
             val completeVerification = view.findViewById<MaterialButton>(R.id.completeVerification)
             val phoneNumberInputs = view.findViewById<EditText>(R.id.phoneNumberInput)
-            val countryCodePickerLayout =
-                view.findViewById<MaterialCardView>(R.id.countryCodePickerLayout)
+            val countryCodePickerLayout = view.findViewById<MaterialCardView>(R.id.countryCodePickerLayout)
+
+            phoneNumberButton.hide()
+            createAccountConsent.isChecked = false
+            createAccountConsent.setOnCheckedChangeListener { _, isChecked ->
+                when (isChecked) {
+                    true -> {
+                        phoneNumberButton.show()
+                    }
+                    false -> {
+                        phoneNumberButton.hide()
+                    }
+                }
+            }
 
             phoneInputLayout.show()
             codeInputLayout.hide()
@@ -388,6 +402,11 @@ class HomeFragment : Fragment() {
                     resendToken = token
                     storedVerificationId = verificationId
 
+                    resendTokeOpt.setOnClickListener {
+                        enterOTP.clearFocus()
+                        phoneInputLayout.show()
+                        codeInputLayout.hide()
+                    }
                     enterOTP.text = "Enter the OTP code sent to ${
                         phoneNumberInputs.text?.trim().toString()
                             .replace(" ", "")
@@ -432,7 +451,7 @@ class HomeFragment : Fragment() {
                                                             override fun onDataChange(snapshot: DataSnapshot) {
                                                                 if (snapshot.exists()) {
                                                                     dismiss()
-                                                                    MoluccusToast(windowContext).showError(
+                                                                    MoluccusToast(windowContext).showSuccess(
                                                                         "Welcome Back To Metospherus A Comprehensive Medical System."
                                                                     )
                                                                 } else {
@@ -443,7 +462,7 @@ class HomeFragment : Fragment() {
                                                                             dismiss()
                                                                             MoluccusToast(
                                                                                 windowContext
-                                                                            ).showError("Welcome To Metospherus A Comprehensive Medical System")
+                                                                            ).showSuccess("Welcome To Metospherus A Comprehensive Medical System")
                                                                         }
                                                                         .addOnFailureListener { exception ->
                                                                             MoluccusToast(

@@ -49,25 +49,32 @@ class InitializeBottomSheetCategories {
                    // val addMoreMedicalDocuments = view.findViewById<ExtendedFloatingActionButton>(R.id.addMoreMedicalDocuments)
 
                     recyclerViewDocuments.layoutManager = GridLayoutManager(context, 2)
+                    when {
+                        auth.currentUser != null -> {
+                            val medicalRecordsDB = db.getReference("MedicalDocuments").child(auth.currentUser!!.uid)
+                            medicalRecordsDB.keepSynced(true)
+                            medicalRecordsDB.addValueEventListener(object : ValueEventListener {
+                                val medicalRec = mutableListOf<GeneralDocuments>()
+                                override fun onDataChange(snapshot: DataSnapshot) {
+                                    medicalRec.clear()
+                                    for (dataSnapshot in snapshot.children) {
+                                        val mdReadme = dataSnapshot.getValue(GeneralDocuments::class.java)
+                                        if (mdReadme != null) {
+                                            medicalRec.add(mdReadme)
+                                        }
+                                    }
 
-                    val medicalRecordsDB = db.getReference("MedicalDocuments").child(auth.currentUser!!.uid)
-                    medicalRecordsDB.keepSynced(true)
-                    medicalRecordsDB.addValueEventListener(object : ValueEventListener {
-                        val medicalRec = mutableListOf<GeneralDocuments>()
-                        override fun onDataChange(snapshot: DataSnapshot) {
-                            medicalRec.clear()
-                            for (dataSnapshot in snapshot.children) {
-                                val mdReadme = dataSnapshot.getValue(GeneralDocuments::class.java)
-                                if (mdReadme != null) {
-                                    medicalRec.add(mdReadme)
+                                    medicalDocumentsAdaptor.setData(medicalRec)
+                                    recyclerViewDocuments.adapter = medicalDocumentsAdaptor
                                 }
-                            }
 
-                            medicalDocumentsAdaptor.setData(medicalRec)
-                            recyclerViewDocuments.adapter = medicalDocumentsAdaptor
+                                override fun onCancelled(error: DatabaseError) {}
+                            })
                         }
-                        override fun onCancelled(error: DatabaseError) {}
-                    })
+                        else -> {
+                            MoluccusToast(context).showInformation("Please Login In Order To Use This Feature!!")
+                        }
+                    }
                 }
 
                 "Pharmacy" -> {

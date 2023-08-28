@@ -210,31 +210,38 @@ fun bottomSheetGeneral(context: Context, generalTemplate: GeneralTemplate) {
                 recyclerViewTracker.isNestedScrollingEnabled = true
                 recyclerViewTracker.setHasFixedSize(true)
 
-                val patientMedicineModulesDB = db.getReference("medicalmodules")
-                    .child("userspecific")
-                    .child("medicineIntake")
-                    .child(auth.currentUser!!.uid)
-                patientMedicineModulesDB.keepSynced(true)
-                patientMedicineModulesDB.addValueEventListener(object : ValueEventListener {
-                    val moduleTemps = mutableListOf<GeneralPills>()
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        moduleTemps.clear()
-                        for (dataSnapshot in snapshot.children) {
-                            val modulesData = dataSnapshot.getValue(GeneralPills::class.java)
-                            medicineCount.text = snapshot.childrenCount.toString()
-                            if (modulesData != null) {
-                                modulesData.pushkey = dataSnapshot.key?: ""
-                                moduleTemps.add(modulesData)
+                when {
+                    auth.currentUser != null -> {
+                        val patientMedicineModulesDB = db.getReference("medicalmodules")
+                            .child("userspecific")
+                            .child("medicineIntake")
+                            .child(auth.currentUser!!.uid)
+                        patientMedicineModulesDB.keepSynced(true)
+                        patientMedicineModulesDB.addValueEventListener(object : ValueEventListener {
+                            val moduleTemps = mutableListOf<GeneralPills>()
+                            override fun onDataChange(snapshot: DataSnapshot) {
+                                moduleTemps.clear()
+                                for (dataSnapshot in snapshot.children) {
+                                    val modulesData = dataSnapshot.getValue(GeneralPills::class.java)
+                                    medicineCount.text = snapshot.childrenCount.toString()
+                                    if (modulesData != null) {
+                                        modulesData.pushkey = dataSnapshot.key?: ""
+                                        moduleTemps.add(modulesData)
+                                    }
+                                }
+                                medicineIntakeAdapter.setData(moduleTemps)
+                                recyclerViewTracker.adapter = medicineIntakeAdapter
                             }
-                        }
-                        medicineIntakeAdapter.setData(moduleTemps)
-                        recyclerViewTracker.adapter = medicineIntakeAdapter
-                    }
 
-                    override fun onCancelled(error: DatabaseError) {
-                        MoluccusToast(context).showError("Cancelled ${error.message}")
+                            override fun onCancelled(error: DatabaseError) {
+                                MoluccusToast(context).showError("Cancelled ${error.message}")
+                            }
+                        })
                     }
-                })
+                    else -> {
+                        MoluccusToast(context).showInformation("Please Login In Order To Use This Feature!!")
+                    }
+                }
             }
 
             "Period Tracker".trim().lowercase(Locale.ROOT) -> {

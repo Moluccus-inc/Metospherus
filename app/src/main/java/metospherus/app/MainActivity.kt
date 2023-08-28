@@ -70,10 +70,48 @@ class MainActivity : AppCompatActivity() {
 
         checkUpdate()
     }
-
     @SuppressLint("InlinedApi")
     override fun onStart() {
         super.onStart()
+        getPermissionsTaskDB()
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                arrayListOf(
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.INTERNET,
+                    Manifest.permission.POST_NOTIFICATIONS,
+                    Manifest.permission.WAKE_LOCK,
+                    Manifest.permission.VIBRATE
+                ).toString()
+            ) != PackageManager.PERMISSION_GRANTED -> {
+                requestPermissions(
+                    arrayOf(
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.INTERNET,
+                        Manifest.permission.POST_NOTIFICATIONS,
+                        Manifest.permission.WAKE_LOCK,
+                        Manifest.permission.VIBRATE
+                    ),
+                    PERMISSIONS_REQUEST_CODE
+                )
+                return
+            }
+        }
+    }
+    override fun onResume() {
+        super.onResume()
+        getPermissionsTaskDB()
+    }
+    override fun onPause() {
+        super.onPause()
+        getPermissionsTaskDB()
+    }
+    private fun getPermissionsTaskDB() {
         when {
             auth.currentUser != null -> {
                 val usrDb = db.getReference("participants").child(auth.currentUser!!.uid)
@@ -111,37 +149,7 @@ class MainActivity : AppCompatActivity() {
                 // do nothing
             }
         }
-
-        when {
-            ContextCompat.checkSelfPermission(
-                this,
-                arrayListOf(
-                    Manifest.permission.CAMERA,
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.INTERNET,
-                    Manifest.permission.POST_NOTIFICATIONS,
-                    Manifest.permission.WAKE_LOCK,
-                    Manifest.permission.VIBRATE
-                ).toString()
-            ) != PackageManager.PERMISSION_GRANTED -> {
-                requestPermissions(
-                    arrayOf(
-                        Manifest.permission.CAMERA,
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.INTERNET,
-                        Manifest.permission.POST_NOTIFICATIONS,
-                        Manifest.permission.WAKE_LOCK,
-                        Manifest.permission.VIBRATE
-                    ),
-                    PERMISSIONS_REQUEST_CODE
-                )
-                return
-            }
-        }
     }
-
     override fun onStop() {
         super.onStop()
         when {
