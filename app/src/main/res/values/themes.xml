@@ -1,5 +1,9 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Base.Theme.Metospherus" parent="Theme.Material3.Light.NoActionBar">
+        <item name="android:windowSplashScreenBackground" tools:ignore="NewApi">?android:windowBackground</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:ignore="NewApi">@drawable/splash_logo</item>
+        <item name="android:windowSplashScreenAnimationDuration" tools:ignore="NewApi">1000</item>
+        <item name="android:windowSplashScreenBehavior" tools:ignore="NewApi">icon_preferred</item>
     </style>
 
     <style name="Theme.Metospherus" parent="Base.Theme.Metospherus" />

@@ -37,7 +37,7 @@ class AlertReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(message)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.metospherus)
             .setAutoCancel(true)
             .addAction(android.R.drawable.ic_delete, "Cancel", cancelPendingIntent)
             .build()

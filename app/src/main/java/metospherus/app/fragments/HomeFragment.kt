@@ -94,7 +94,6 @@ class HomeFragment : Fragment() {
     private lateinit var storedVerificationId: String
 
     private val selectedImageLiveData = MutableLiveData<Uri>()
-
     private val imguriholder =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uris ->
             if (uris != null) {
@@ -157,42 +156,26 @@ class HomeFragment : Fragment() {
     }
 
     private fun initializeCatagories() {
-        val trackerInstance = mutableListOf(
-            GeneralCategory(
-                "Documents",
-                R.drawable.medical_documents,
-                true
-            ),
-            GeneralCategory(
-                "Pharmacy",
-                R.drawable.pharmacies,
-                false
-            ),
-            GeneralCategory(
-                "Hospital",
-                R.drawable.hospital,
-                false
-            ),
-            GeneralCategory(
-                "Professionals",
-                R.drawable.medical_team,
-                false
-            ),
-            GeneralCategory(
-                "Delivery",
-                R.drawable.delivery,
-                false
-            ),
-            GeneralCategory(
-                "Others",
-                R.drawable.others,
-                false
-            ),
-        )
+        val categoriesGeneralModulesDB = db.getReference("medicalmodules").child("Categories")
+        categoriesGeneralModulesDB.keepSynced(true)
+        categoriesGeneralModulesDB.addValueEventListener(object : ValueEventListener {
+            val trackerInstance = mutableListOf<GeneralCategory>()
+            override fun onDataChange(snapshot: DataSnapshot) {
+                trackerInstance.clear()
+                for (dataSnapshot in snapshot.children) {
+                    val modulesData = dataSnapshot.getValue(GeneralCategory::class.java)
+                    if (modulesData?.enabled == true) {
+                        trackerInstance.add(modulesData)
+                    }
+                }
+                categoryAdapter.setData(trackerInstance)
+                recylerCatagories.adapter = categoryAdapter
+            }
 
-        categoryAdapter.setData(trackerInstance)
-        recylerCatagories.adapter = categoryAdapter
-
+            override fun onCancelled(error: DatabaseError) {
+                MoluccusToast(requireContext()).showError("Cancelled ${error.message}")
+            }
+        })
     }
 
     private fun initializeTracker() {
@@ -608,7 +591,7 @@ class HomeFragment : Fragment() {
                                             fileName?.substring(fileName.lastIndexOf(".") + 1)
 
                                         val imageRef =
-                                            storageRef.child("MedicalDocuments/$uid/${documentTitle}.$extension")
+                                            storageRef.child("MedicalDocuments/$uid/${documentTitle.text!!.trim()}.$extension")
                                         val uploadTask = imageRef.putFile(selectedImageUri)
                                         uploadTask.addOnSuccessListener {
                                             imageRef.downloadUrl.addOnSuccessListener { uri ->

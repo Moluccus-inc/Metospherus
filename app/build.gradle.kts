@@ -17,7 +17,7 @@ android {
         //noinspection EditedTargetSdkVersion
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0.1"
+        versionName = "1.0.2"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -57,6 +57,7 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.1")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.1")
     implementation("androidx.preference:preference-ktx:1.2.1")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     // glide
     implementation("com.github.bumptech.glide:glide:4.15.1")
