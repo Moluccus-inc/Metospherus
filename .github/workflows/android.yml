@@ -28,7 +28,7 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-  steps:
+
       - name: Build and tag version
         run: |
           chmod +x gradlew
@@ -37,7 +37,7 @@ jobs:
           echo "Version Name: $versionName"
           git tag -a "v$versionName" -m "Release version $versionName"
           git push --tags
-steps:
+
       - name: Upload release artifact
         uses: actions/upload-artifact@v3
         with:
