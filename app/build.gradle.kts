@@ -10,13 +10,13 @@ plugins {
 android {
     signingConfigs {
         getByName("debug") {
-            storeFile = file("/Users/laniina/StudioProjects/Metospherus/key/metospherus.jks")
+            storeFile = file("key/metospherus.jks")
             storePassword = rootProject.extra["psw"] as String
             keyAlias = rootProject.extra["key"] as String
             keyPassword = rootProject.extra["psw"] as String
         }
         create("release") {
-            storeFile = file("/Users/laniina/StudioProjects/Metospherus/key/metospherus.jks")
+            storeFile = file("key/metospherus.jks")
             storePassword = rootProject.extra["psw"] as String
             keyAlias = rootProject.extra["key"] as String
             keyPassword = rootProject.extra["psw"] as String
