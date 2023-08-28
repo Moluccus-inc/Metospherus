@@ -13,6 +13,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
@@ -38,6 +40,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuth
@@ -49,6 +52,7 @@ import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ktx.Firebase
@@ -155,6 +159,172 @@ class HomeFragment : Fragment() {
         }
 
     }
+    override fun onResume() {
+        super.onResume()
+        getPermissionsTaskDB()
+    }
+    private fun getPermissionsTaskDB() {
+        when {
+            auth.currentUser != null -> {
+                val usrDb = db.getReference("participants").child(auth.currentUser!!.uid)
+                usrDb.keepSynced(true)
+
+                usrDb.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        when {
+                            !dataSnapshot.hasChild("userId") -> {
+                                initCompleteUserProfile(usrDb)
+                            }
+                            else -> {
+                                val startTimestamp = System.currentTimeMillis() / 1000 // Get current timestamp in seconds
+                                val dateFormat = SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault())
+                                val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+
+                                val exitDate = dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
+                                val exitTime = timeFormat.format(startTimestamp * 1000) // Convert to milliseconds
+
+                                val activeStatus = mapOf(
+                                    "active_status" to true,
+                                    "active_time" to "$exitTime - $exitDate",
+                                )
+                                usrDb.updateChildren(activeStatus)
+                            }
+                        }
+                    }
+
+                    override fun onCancelled(databaseError: DatabaseError) {
+                        // Handle the error if needed.
+                    }
+                })
+            }
+            else -> {
+                // do nothing
+            }
+        }
+    }
+    private fun initCompleteUserProfile(usrDb: DatabaseReference) {
+        MaterialDialog(requireContext()).show {
+            customView(R.layout.activity_complete_user_profile)
+            cornerRadius(literalDp = 20f)
+
+            val accountType = view.findViewById<AutoCompleteTextView>(R.id.accountType)
+            val userPreferedName = view.findViewById<TextInputEditText>(R.id.userPreferedName)
+            val userHandle = view.findViewById<TextInputEditText>(R.id.userHandle)
+            val userId = view.findViewById<TextInputEditText>(R.id.userId)
+            val usersEmail = view.findViewById<TextInputEditText>(R.id.usersEmail)
+            val usersEmailLayout = view.findViewById<TextInputLayout>(R.id.usersEmailLayout)
+
+            onShow {
+                val displayMetrics = windowContext.resources.displayMetrics
+                val dialogWidth =
+                    displayMetrics.widthPixels - (2 * windowContext.resources.getDimensionPixelSize(
+                        R.dimen.dialog_margin_horizontal
+                    ))
+                window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
+            }
+
+            val accountTypes = resources.getStringArray(R.array.metospherus_account_type)
+            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, accountTypes)
+            accountType.setAdapter(adapter)
+
+            accountType.setOnItemClickListener { parent, _, position, _ ->
+                val selectedAccountType = parent.getItemAtPosition(position) as String
+                val accountTypeHolder = selectedAccountType.trim().replace(" ", "_").lowercase()
+                val accountTypePrefix = accountTypeHolder.take(3).uppercase(Locale.ROOT)
+                val uidSubstring = auth.currentUser?.uid
+                val uidDigits = uidSubstring?.hashCode()?.toString()?.replace("-", "")?.take(12)
+                val userIdentification = "$accountTypePrefix$uidDigits"
+                userId.setText(userIdentification)
+            }
+
+
+            userHandle.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+                override fun afterTextChanged(editable: Editable?) {
+                    val input = editable.toString()
+
+                    val validInput = input.replace(" ", "_") // Replace spaces with underscores
+                        .replace(".", "_") // Replace dots with underscores
+                        .replace(Regex("[^a-zA-Z0-9_]"), "")
+                        .lowercase(Locale.ROOT)// Remove all characters except letters, digits, and underscore
+
+                    // Update the EditText with the valid input
+                    if (input != validInput) {
+                        editable?.replace(0, editable.length, validInput)
+                    }
+                }
+            })
+
+            usersEmail.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                    // Not needed for your implementation
+                }
+
+                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                    // Not needed for your implementation
+                }
+
+                override fun afterTextChanged(editable: Editable?) {
+                    val input = editable.toString()
+
+                    if (isValidEmail(input)) {
+                        // Email is valid, remove any previous error message if shown
+                        usersEmailLayout.error = null
+                    } else {
+                        // Show an error message to the user indicating that the email format is incorrect
+                        usersEmailLayout.error = "Invalid email format"
+                    }
+                }
+            })
+
+            positiveButton(text = "Complete") {
+                val selectedAccountType = accountType.text.toString().trim()
+                val accountTypeHolder = selectedAccountType.replace(" ", "_").lowercase()
+                val accountTypePrefix = accountTypeHolder.take(3).uppercase(Locale.ROOT)
+
+                val handle = userHandle.text?.trim().toString().replace(" ", "_").lowercase()
+                val email = usersEmail.text?.trim().toString()
+
+                when {
+                    selectedAccountType.isEmpty() || userPreferedName.text!!.isEmpty() || handle.isEmpty() -> {
+                        // Show specific error messages for each field if they are empty
+                    }
+                    !isValidEmail(email) -> {
+                        // Show an error message for invalid email format
+                        usersEmailLayout.error = "Invalid email format"
+                    }
+                    else -> {
+                        val uidSubstring = auth.currentUser?.uid
+                        val uidDigits = uidSubstring?.hashCode()?.toString()?.replace("-", "")?.take(12)
+                        val userIdentification = "$accountTypePrefix$uidDigits"
+
+                        val addProfileDetails = mapOf(
+                            "accountType" to accountTypeHolder,
+                            "handle" to "@$handle",
+                            "userId" to userIdentification,
+                            "email" to email,
+                            "name" to userPreferedName.text.toString()
+                        )
+
+                        usrDb.updateChildren(addProfileDetails)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    dismiss()
+                                    MoluccusToast(requireContext()).showSuccess("Profile updated successfully!!\uD83D\uDE0A")
+                                } else {
+                                    MoluccusToast(requireContext()).showError("Error: ${task.exception?.message}")
+                                }
+                            }
+                    }
+                }
+            }
+        }
+    }
+    private fun isValidEmail(email: String): Boolean {
+        val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
+        return email.matches(emailPattern.toRegex())
+    }
     private fun initializeCatagories() {
         val categoriesGeneralModulesDB = db.getReference("medicalmodules").child("Categories")
         categoriesGeneralModulesDB.keepSynced(true)
@@ -177,7 +347,6 @@ class HomeFragment : Fragment() {
             }
         })
     }
-
     private fun initializeTracker() {
         val patientGeneralModulesDB = db.getReference("medicalmodules").child("modules")
         patientGeneralModulesDB.keepSynced(true)
@@ -200,7 +369,6 @@ class HomeFragment : Fragment() {
             }
         })
     }
-
     @OptIn(DelicateCoroutinesApi::class)
     private fun initProfileSheetIfNeeded() {
         GlobalScope.launch(Dispatchers.Main) {
@@ -265,7 +433,6 @@ class HomeFragment : Fragment() {
             }
         }
     }
-
     @SuppressLint("SetTextI18n")
     private fun initBottomSheetsIfNeeded() {
         MaterialDialog(requireContext(), BottomSheet(LayoutMode.WRAP_CONTENT)).show {
@@ -519,7 +686,6 @@ class HomeFragment : Fragment() {
             }
         }
     }
-
     @SuppressLint("Recycle", "Range")
     private fun initBottomSheets() {
         MaterialDialog(requireContext(), BottomSheet(LayoutMode.WRAP_CONTENT)).show {
@@ -664,7 +830,6 @@ class HomeFragment : Fragment() {
             }
         }
     }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

@@ -38,8 +38,22 @@ jobs:
           git tag -a "v$versionName" -m "Release version $versionName"
           git push --tags
 
-      - name: Upload release artifact
-        uses: actions/upload-artifact@v3
+      - name: Rename release directory
+        run: |
+          mv app/build/outputs/apk/release/metospherus-arm64-v8a-release.apk app/build/outputs/apk/release/metospherus-arm64-v8a.apk
+          mv app/build/outputs/apk/release/metospherus-armeabi-v7a-release.apk app/build/outputs/apk/release/metospherus-armeabi-v7a.apk
+          mv app/build/outputs/apk/release/metospherus-x86-release.apk app/build/outputs/apk/release/metospherus-x86.apk
+          mv app/build/outputs/apk/release/metospherus-x86_64-release.apk app/build/outputs/apk/release/metospherus-x86_64.apk
+          mv app/build/outputs/apk/release/metospherus-universal-release.apk app/build/outputs/apk/release/metospherus-universal.apk
+
+      - name: Create Draft Release
+        id: create_draft_release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
-          name: metospherus.apk
-          path: app/build/outputs/apk/release/metospherus-release.apk
+          files: app/build/outputs/apk/release/metospherus*
+          draft: true
+          title: Release ${{ github.ref }}
+          body: |
+            Your release notes go here.

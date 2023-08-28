@@ -73,7 +73,6 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("InlinedApi")
     override fun onStart() {
         super.onStart()
-        getPermissionsTaskDB()
         when {
             ContextCompat.checkSelfPermission(
                 this,
@@ -103,53 +102,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    override fun onResume() {
-        super.onResume()
-        getPermissionsTaskDB()
-    }
-    override fun onPause() {
-        super.onPause()
-        getPermissionsTaskDB()
-    }
-    private fun getPermissionsTaskDB() {
-        when {
-            auth.currentUser != null -> {
-                val usrDb = db.getReference("participants").child(auth.currentUser!!.uid)
-                usrDb.keepSynced(true)
 
-                usrDb.addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        when {
-                            !dataSnapshot.hasChild("userId") -> {
-                                initCompleteUserProfile(usrDb)
-                            }
-                            else -> {
-                                val startTimestamp = System.currentTimeMillis() / 1000 // Get current timestamp in seconds
-                                val dateFormat = SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault())
-                                val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
-
-                                val exitDate = dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
-                                val exitTime = timeFormat.format(startTimestamp * 1000) // Convert to milliseconds
-
-                                val activeStatus = mapOf(
-                                    "active_status" to true,
-                                    "active_time" to "$exitTime - $exitDate",
-                                )
-                                usrDb.updateChildren(activeStatus)
-                            }
-                        }
-                    }
-
-                    override fun onCancelled(databaseError: DatabaseError) {
-                        // Handle the error if needed.
-                    }
-                })
-            }
-            else -> {
-                // do nothing
-            }
-        }
-    }
     override fun onStop() {
         super.onStop()
         when {
@@ -220,129 +173,6 @@ class MainActivity : AppCompatActivity() {
             exitProcess(0)
         }
         dialog.show()
-    }
-
-    private fun initCompleteUserProfile(usrDb: DatabaseReference) {
-        MaterialDialog(this).show {
-            customView(R.layout.activity_complete_user_profile)
-            cornerRadius(literalDp = 20f)
-
-            val accountType = view.findViewById<AutoCompleteTextView>(R.id.accountType)
-            val userPreferedName = view.findViewById<TextInputEditText>(R.id.userPreferedName)
-            val userHandle = view.findViewById<TextInputEditText>(R.id.userHandle)
-            val userId = view.findViewById<TextInputEditText>(R.id.userId)
-            val usersEmail = view.findViewById<TextInputEditText>(R.id.usersEmail)
-            val usersEmailLayout = view.findViewById<TextInputLayout>(R.id.usersEmailLayout)
-
-            onShow {
-                val displayMetrics = windowContext.resources.displayMetrics
-                val dialogWidth =
-                    displayMetrics.widthPixels - (2 * windowContext.resources.getDimensionPixelSize(
-                        R.dimen.dialog_margin_horizontal
-                    ))
-                window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
-            }
-
-            val accountTypes = resources.getStringArray(R.array.metospherus_account_type)
-            val adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_dropdown_item_1line, accountTypes)
-            accountType.setAdapter(adapter)
-
-            accountType.setOnItemClickListener { parent, _, position, _ ->
-                val selectedAccountType = parent.getItemAtPosition(position) as String
-                val accountTypeHolder = selectedAccountType.trim().replace(" ", "_").lowercase()
-                val accountTypePrefix = accountTypeHolder.take(3).uppercase(Locale.ROOT)
-                val uidSubstring = auth.currentUser?.uid
-                val uidDigits = uidSubstring?.hashCode()?.toString()?.replace("-", "")?.take(12)
-                val userIdentification = "$accountTypePrefix$uidDigits"
-                userId.setText(userIdentification)
-            }
-
-
-            userHandle.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun afterTextChanged(editable: Editable?) {
-                    val input = editable.toString()
-
-                    val validInput = input.replace(" ", "_") // Replace spaces with underscores
-                        .replace(".", "_") // Replace dots with underscores
-                        .replace(Regex("[^a-zA-Z0-9_]"), "") // Remove all characters except letters, digits, and underscore
-
-                    // Update the EditText with the valid input
-                    if (input != validInput) {
-                        editable?.replace(0, editable.length, validInput)
-                    }
-                }
-            })
-
-            usersEmail.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                    // Not needed for your implementation
-                }
-
-                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                    // Not needed for your implementation
-                }
-
-                override fun afterTextChanged(editable: Editable?) {
-                    val input = editable.toString()
-
-                    if (isValidEmail(input)) {
-                        // Email is valid, remove any previous error message if shown
-                        usersEmailLayout.error = null
-                    } else {
-                        // Show an error message to the user indicating that the email format is incorrect
-                        usersEmailLayout.error = "Invalid email format"
-                    }
-                }
-            })
-
-            positiveButton(text = "Complete") {
-                val selectedAccountType = accountType.text.toString().trim()
-                val accountTypeHolder = selectedAccountType.replace(" ", "_").lowercase()
-                val accountTypePrefix = accountTypeHolder.take(3).uppercase(Locale.ROOT)
-
-                val handle = userHandle.text?.trim().toString().replace(" ", "_").lowercase()
-                val email = usersEmail.text?.trim().toString()
-
-                when {
-                    selectedAccountType.isEmpty() || userPreferedName.text!!.isEmpty() || handle.isEmpty() -> {
-                        // Show specific error messages for each field if they are empty
-                    }
-                    !isValidEmail(email) -> {
-                        // Show an error message for invalid email format
-                        usersEmailLayout.error = "Invalid email format"
-                    }
-                    else -> {
-                        val uidSubstring = auth.currentUser?.uid
-                        val uidDigits = uidSubstring?.hashCode()?.toString()?.replace("-", "")?.take(12)
-                        val userIdentification = "$accountTypePrefix$uidDigits"
-
-                        val addProfileDetails = mapOf(
-                            "accountType" to accountTypeHolder,
-                            "handle" to "@$handle",
-                            "userId" to userIdentification,
-                            "email" to email,
-                            "name" to userPreferedName.text.toString()
-                        )
-
-                        usrDb.updateChildren(addProfileDetails)
-                            .addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    dismiss()
-                                    MoluccusToast(this@MainActivity).showSuccess("Profile updated successfully!!\uD83D\uDE0A")
-                                } else {
-                                    MoluccusToast(this@MainActivity).showError("Error: ${task.exception?.message}")
-                                }
-                            }
-                    }
-                }
-            }
-        }
-    }
-    private fun isValidEmail(email: String): Boolean {
-        val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
-        return email.matches(emailPattern.toRegex())
     }
     private fun checkUpdate() {
         if (preferences.getBoolean("update_app", true)) {
