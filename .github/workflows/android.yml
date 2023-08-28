@@ -39,9 +39,8 @@ jobs:
           git tag -a "v$versionName" -m "Release version $versionName"
           git push --tags
 
-      - name: Create Release Notes
-        uses: docker://decathlon/release-notes-generator-action:2.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          USE_MILESTONE_TITLE: "true"
-          FILENAME: ProvidedFilename
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release-unsigned.apk
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
