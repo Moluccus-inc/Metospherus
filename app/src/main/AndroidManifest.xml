@@ -14,9 +14,10 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
@@ -46,16 +47,12 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".services.AlertReceiver"
-            android:exported="false"
-            android:enabled="true"/>
-
-        <receiver android:name=".services.CancelAlertReceiver"
-            android:exported="false"
-            android:enabled="true"/>
-
-        <receiver android:name=".services.WakefulAlertReceiver"
-            android:exported="false"
-            android:enabled="true"/>
+        <service
+            android:name=".services.MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

@@ -4,8 +4,11 @@ import android.app.AlarmManager
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.database.profile_data.Profiles
+import metospherus.app.modules.GeneralMenstrualCycle
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -41,6 +44,14 @@ object Constructor {
 
     suspend fun getUserProfilesFromDatabase(appDatabase: AppDatabase): Profiles? {
         return appDatabase.profileLocal().getUserPatient()
+    }
+    suspend fun getMenstrualCyclesFromLocalDatabase(appDatabase: AppDatabase): GeneralMenstrualCycle? {
+        return appDatabase.menstrualCycleLocal().getMenstrualCycles()
+    }
+    suspend fun insertOrUpdateMenstrualCycles(menstrual: GeneralMenstrualCycle, appDatabase: AppDatabase) {
+        withContext(Dispatchers.IO) {
+            appDatabase.menstrualCycleLocal().insertOrUpdateMenstrualCycles(menstrual)
+        }
     }
 
     fun convertTimeToMilliseconds(time: String): Long {

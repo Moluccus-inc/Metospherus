@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
     id("com.google.devtools.ksp")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -117,6 +118,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.firebaseui:firebase-ui-auth:7.2.0")
     implementation("com.google.android.play:integrity:1.2.0")
+    implementation("com.google.firebase:firebase-messaging-ktx")
     implementation("com.google.android.gms:play-services-auth:20.6.0")
     implementation("com.google.firebase:firebase-appcheck-playintegrity")
     implementation("com.google.firebase:firebase-appcheck-ktx")
@@ -145,7 +147,7 @@ tasks.register("assembleRelease2") {
     dependsOn("assemble")
     doLast {
         copy {
-            from("${project.buildDir}/outputs/apk/release/app-release.apk")
+            from("${project.buildDir}/outputs/apk/release/metospherus*")
             into("${project.buildDir}/assets/")
         }
     }

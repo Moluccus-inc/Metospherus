@@ -14,7 +14,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import metospherus.app.R
 import metospherus.app.modules.GeneralPills
-import metospherus.app.services.AlertManager
 
 class MedicineIntakeAdaptor(
     private val context: Context,
@@ -52,10 +51,6 @@ class MedicineIntakeAdaptor(
             itemView.findViewById<TextView>(R.id.medicineTime).text = generalPill.medicineTime
             itemView.findViewById<Chip>(R.id.medicinePeriod).text = generalPill.medicineDate
 
-            AlertManager().createAlert(
-                context, generalPill.medicineName.toString(),
-                "reminder to take you medicine in time", generalPill.medicineTime.toString()
-            )
             when {
                 generalPill.medicineAmount!!.contains("1") -> {
                     itemView.findViewById<Chip>(R.id.medicinePrescrition).text =

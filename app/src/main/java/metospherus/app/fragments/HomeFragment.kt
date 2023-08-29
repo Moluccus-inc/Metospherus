@@ -72,6 +72,7 @@ import metospherus.app.adaptors.MainAdaptor
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.databinding.FragmentHomeBinding
 import metospherus.app.modules.GeneralCategory
+import metospherus.app.modules.GeneralMenstrualCycle
 import metospherus.app.modules.GeneralTemplate
 import metospherus.app.utilities.Constructor
 import metospherus.app.utilities.Constructor.hide
@@ -130,7 +131,7 @@ class HomeFragment : Fragment() {
         recylerCatagories.layoutManager = GridLayoutManager(requireContext(), 4)
         recyclerViewTracker.layoutManager = GridLayoutManager(requireContext(), 3)
 
-        mainAdapter = MainAdaptor(requireContext())
+        mainAdapter = MainAdaptor(requireContext(), lifecycleScope)
         categoryAdapter = CategoriesAdaptor(requireContext())
 
         initializeTracker()
@@ -149,16 +150,22 @@ class HomeFragment : Fragment() {
         }
 
         lifecycleScope.launch {
-            val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
-            if (userPatient != null) {
-                Glide.with(requireContext())
-                    .load(userPatient.avatar)
-                    .placeholder(R.drawable.holder)
-                    .into(binding.profilePicture)
-            }
-        }
+            val avatarProfile = db.getReference("participants").child(auth.currentUser!!.uid)
+                .child("avatar")
+            avatarProfile.keepSynced(true)
+            avatarProfile.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Glide.with(requireContext())
+                        .load(snapshot.getValue(String::class.java))
+                        .placeholder(R.drawable.holder)
+                        .into(binding.profilePicture)
+                }
 
+                override fun onCancelled(error: DatabaseError) {}
+            })
+        }
     }
+
     override fun onResume() {
         super.onResume()
         getPermissionsTaskDB()
@@ -168,20 +175,24 @@ class HomeFragment : Fragment() {
             auth.currentUser != null -> {
                 val usrDb = db.getReference("participants").child(auth.currentUser!!.uid)
                 usrDb.keepSynced(true)
-
                 usrDb.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         when {
                             !dataSnapshot.hasChild("userId") -> {
                                 initCompleteUserProfile(usrDb)
                             }
+
                             else -> {
-                                val startTimestamp = System.currentTimeMillis() / 1000 // Get current timestamp in seconds
-                                val dateFormat = SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault())
+                                val startTimestamp =
+                                    System.currentTimeMillis() / 1000 // Get current timestamp in seconds
+                                val dateFormat =
+                                    SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault())
                                 val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
 
-                                val exitDate = dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
-                                val exitTime = timeFormat.format(startTimestamp * 1000) // Convert to milliseconds
+                                val exitDate =
+                                    dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
+                                val exitTime =
+                                    timeFormat.format(startTimestamp * 1000) // Convert to milliseconds
 
                                 val activeStatus = mapOf(
                                     "active_status" to true,
@@ -197,11 +208,13 @@ class HomeFragment : Fragment() {
                     }
                 })
             }
+
             else -> {
                 // do nothing
             }
         }
     }
+
     private fun initCompleteUserProfile(usrDb: DatabaseReference) {
         MaterialDialog(requireContext()).show {
             customView(R.layout.activity_complete_user_profile)
@@ -224,7 +237,11 @@ class HomeFragment : Fragment() {
             }
 
             val accountTypes = resources.getStringArray(R.array.metospherus_account_type)
-            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, accountTypes)
+            val adapter = ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_dropdown_item_1line,
+                accountTypes
+            )
             accountType.setAdapter(adapter)
 
             accountType.setOnItemClickListener { parent, _, position, _ ->
@@ -290,13 +307,16 @@ class HomeFragment : Fragment() {
                     selectedAccountType.isEmpty() || userPreferedName.text!!.isEmpty() || handle.isEmpty() -> {
                         // Show specific error messages for each field if they are empty
                     }
+
                     !isValidEmail(email) -> {
                         // Show an error message for invalid email format
                         usersEmailLayout.error = "Invalid email format"
                     }
+
                     else -> {
                         val uidSubstring = auth.currentUser?.uid
-                        val uidDigits = uidSubstring?.hashCode()?.toString()?.replace("-", "")?.take(12)
+                        val uidDigits =
+                            uidSubstring?.hashCode()?.toString()?.replace("-", "")?.take(12)
                         val userIdentification = "$accountTypePrefix$uidDigits"
 
                         val addProfileDetails = mapOf(
@@ -321,10 +341,12 @@ class HomeFragment : Fragment() {
             }
         }
     }
+
     private fun isValidEmail(email: String): Boolean {
         val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
         return email.matches(emailPattern.toRegex())
     }
+
     private fun initializeCatagories() {
         val categoriesGeneralModulesDB = db.getReference("medicalmodules").child("Categories")
         categoriesGeneralModulesDB.keepSynced(true)
@@ -347,6 +369,7 @@ class HomeFragment : Fragment() {
             }
         })
     }
+
     private fun initializeTracker() {
         val patientGeneralModulesDB = db.getReference("medicalmodules").child("modules")
         patientGeneralModulesDB.keepSynced(true)
@@ -369,6 +392,7 @@ class HomeFragment : Fragment() {
             }
         })
     }
+
     @OptIn(DelicateCoroutinesApi::class)
     private fun initProfileSheetIfNeeded() {
         GlobalScope.launch(Dispatchers.Main) {
@@ -433,6 +457,7 @@ class HomeFragment : Fragment() {
             }
         }
     }
+
     @SuppressLint("SetTextI18n")
     private fun initBottomSheetsIfNeeded() {
         MaterialDialog(requireContext(), BottomSheet(LayoutMode.WRAP_CONTENT)).show {
@@ -448,13 +473,15 @@ class HomeFragment : Fragment() {
             val codeInputLayout = view.findViewById<LinearLayoutCompat>(R.id.codeInputLayout)
             val otpView = view.findViewById<OtpTextView>(R.id.otp_view)
             val enterOTP = view.findViewById<TextView>(R.id.enterOTP)
-            val createAccountConsent = view.findViewById<MaterialCheckBox>(R.id.createAccountConsent)
+            val createAccountConsent =
+                view.findViewById<MaterialCheckBox>(R.id.createAccountConsent)
             val resendTokeOpt = view.findViewById<TextView>(R.id.resendTokeOpt)
 
             val phoneNumberButton = view.findViewById<MaterialButton>(R.id.phoneNumberButton)
             val completeVerification = view.findViewById<MaterialButton>(R.id.completeVerification)
             val phoneNumberInputs = view.findViewById<EditText>(R.id.phoneNumberInput)
-            val countryCodePickerLayout = view.findViewById<MaterialCardView>(R.id.countryCodePickerLayout)
+            val countryCodePickerLayout =
+                view.findViewById<MaterialCardView>(R.id.countryCodePickerLayout)
 
             phoneNumberButton.hide()
             createAccountConsent.isChecked = false
@@ -463,6 +490,7 @@ class HomeFragment : Fragment() {
                     true -> {
                         phoneNumberButton.show()
                     }
+
                     false -> {
                         phoneNumberButton.hide()
                     }
@@ -686,6 +714,7 @@ class HomeFragment : Fragment() {
             }
         }
     }
+
     @SuppressLint("Recycle", "Range")
     private fun initBottomSheets() {
         MaterialDialog(requireContext(), BottomSheet(LayoutMode.WRAP_CONTENT)).show {
@@ -830,6 +859,7 @@ class HomeFragment : Fragment() {
             }
         }
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

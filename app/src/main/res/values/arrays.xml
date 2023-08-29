@@ -3,7 +3,6 @@
     <string-array name="date_layout">
         <item>Day</item>
         <item>Week</item>
-        <item>Month</item>
     </string-array>
 
     <string-array name="medicine_amount">

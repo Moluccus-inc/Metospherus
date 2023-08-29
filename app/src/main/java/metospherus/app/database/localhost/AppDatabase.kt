@@ -6,11 +6,13 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import metospherus.app.database.profile_data.Profiles
+import metospherus.app.modules.GeneralMenstrualCycle
 
-@Database(entities = [Profiles::class], version = 2)
+@Database(entities = [Profiles::class, GeneralMenstrualCycle::class], version = 3)
 @TypeConverters(AvatarTypeConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun profileLocal(): UserProfileDao
+    abstract fun menstrualCycleLocal(): MenstrualCyclesDao
     companion object {
         private var INSTANCE: AppDatabase? = null
 

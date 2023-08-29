@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.card.MaterialCardView
@@ -13,7 +14,7 @@ import metospherus.app.R
 import metospherus.app.modules.GeneralTemplate
 import metospherus.app.utilities.bottomSheetGeneral
 
-class MainAdaptor(private val context: Context) : RecyclerView.Adapter<MainAdaptor.ViewHolder>() {
+class MainAdaptor(private val context: Context, private val lifecycleScope: LifecycleCoroutineScope) : RecyclerView.Adapter<MainAdaptor.ViewHolder>() {
     private val serviceList: MutableList<GeneralTemplate> = mutableListOf()
 
     @SuppressLint("NotifyDataSetChanged")
@@ -28,7 +29,7 @@ class MainAdaptor(private val context: Context) : RecyclerView.Adapter<MainAdapt
         fun bind(generalTemplate: GeneralTemplate, context: Context) {
             itemView.findViewById<TextView>(R.id.templateTitle).text = generalTemplate.name
             itemView.findViewById<MaterialCardView>(R.id.containerGen).setOnClickListener {
-                bottomSheetGeneral(context, generalTemplate)
+                bottomSheetGeneral(context, generalTemplate, lifecycleScope)
             }
             Glide.with(context)
                 .load(generalTemplate.img)
