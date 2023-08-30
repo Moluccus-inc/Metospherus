@@ -29,6 +29,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Google Cloud AI
+        run: |
+          chmod +x gradlew
+          cd google-cloud-ai-generativelanguage-v1beta2-java
+          ./gradlew publishToMavenLocal
+
       - name: Build and tag version
         run: |
           chmod +x gradlew

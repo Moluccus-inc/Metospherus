@@ -1,8 +1,12 @@
 package metospherus.app.update
 
+import android.annotation.SuppressLint
 import android.app.DownloadManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -10,12 +14,14 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import metospherus.app.BuildConfig
 import metospherus.app.R
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
@@ -101,6 +107,7 @@ class UpdateUtil(var context: Context) {
         return json
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private fun startAppUpdate(updateInfo: JSONObject) {
         try {
             val versions = updateInfo.getJSONArray("assets")
@@ -119,21 +126,58 @@ class UpdateUtil(var context: Context) {
                 return
             }
             val uri = Uri.parse(url)
-            Environment
-                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                .mkdirs()
-            downloadManager.enqueue(
-                DownloadManager.Request(uri)
-                    .setAllowedNetworkTypes(
-                        DownloadManager.Request.NETWORK_WIFI or
-                                DownloadManager.Request.NETWORK_MOBILE
-                    )
-                    .setAllowedOverRoaming(true)
-                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    .setTitle(context.getString(R.string.downloading_update))
-                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, appName)
-            )
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val apkFile = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), appName)
+            downloadsDir.mkdirs()
+            val downloadRequest = DownloadManager.Request(uri)
+                .setAllowedNetworkTypes(
+                    DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE
+                )
+                .setAllowedOverRoaming(true)
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setTitle(context.getString(R.string.downloading_update))
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, appName)
+
+            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val downloadId = downloadManager.enqueue(downloadRequest)
+
+            // Listen for download completion
+            val onCompleteReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    if (intent?.action == DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
+                        val downloadCompletedId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+                        if (downloadCompletedId == downloadId) {
+                            // Download completed, prompt user to install
+                            // Install the downloaded APK
+                            val installIntent = Intent(Intent.ACTION_VIEW)
+                            val apkUri = FileProvider.getUriForFile(
+                                context!!,
+                                context.packageName + ".provider",
+                                apkFile
+                            )
+                            installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive")
+                            installIntent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            context.startActivity(installIntent)
+
+                            // Restart the application
+                            val packageManager = context.packageManager
+                            val launchIntent = packageManager.getLaunchIntentForPackage(context.packageName)
+                            launchIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                            context.startActivity(launchIntent)
+
+                            apkFile.delete()
+
+                            context.unregisterReceiver(this)
+                        }
+                    }
+                }
+            }
+
+            // Register the BroadcastReceiver to listen for download completion
+            val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+            context.registerReceiver(onCompleteReceiver, filter)
         } catch (ignored: Exception) {
+            // Handle exceptions
         }
     }
 

@@ -74,5 +74,4 @@ object Constructor {
             else -> AlarmManager.INTERVAL_DAY
         }
     }
-
 }

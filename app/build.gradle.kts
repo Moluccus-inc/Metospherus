@@ -34,7 +34,7 @@ android {
         //noinspection EditedTargetSdkVersion
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0.5"
+        versionName = "1.0.6"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -88,6 +88,13 @@ android {
             isUniversalApk = true
         }
     }
+    packagingOptions {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/DEPENDENCIES"
+        }
+    }
 }
 
 dependencies {
@@ -99,6 +106,7 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.7.1")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
 
     // glide
     implementation("com.github.bumptech.glide:glide:4.15.1")
@@ -109,6 +117,10 @@ dependencies {
     implementation("com.afollestad.material-dialogs:lifecycle:3.2.1")
     implementation("com.afollestad.material-dialogs:datetime:3.2.1")
     implementation("com.afollestad.material-dialogs:bottomsheets:3.3.0")
+
+    // ML dependencies
+    implementation("com.google.cloud:gapic-google-cloud-ai-generativelanguage-v1beta2-java:0.0.0-SNAPSHOT")
+    implementation("io.grpc:grpc-okhttp:1.53.0")
 
     // firebase
     implementation(platform("com.google.firebase:firebase-bom:32.2.2"))

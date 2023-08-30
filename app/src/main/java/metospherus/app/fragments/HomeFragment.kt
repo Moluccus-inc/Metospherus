@@ -13,6 +13,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
@@ -23,22 +24,27 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
+import com.afollestad.materialdialogs.bottomsheets.setPeekHeight
 import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
 import com.bumptech.glide.Glide
+import com.facebook.shimmer.Shimmer
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.search.SearchBar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.FirebaseException
@@ -62,6 +68,9 @@ import com.hbb20.countrypicker.dialog.launchCountryPickerDialog
 import com.hbb20.countrypicker.models.CPCountry
 import `in`.aabhasjindal.otptextview.OTPListener
 import `in`.aabhasjindal.otptextview.OtpTextView
+import koleton.api.hideSkeleton
+import koleton.api.isSkeletonShown
+import koleton.api.loadSkeleton
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -69,18 +78,20 @@ import kotlinx.coroutines.launch
 import metospherus.app.R
 import metospherus.app.adaptors.CategoriesAdaptor
 import metospherus.app.adaptors.MainAdaptor
+import metospherus.app.adaptors.SearchAdaptor
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.databinding.FragmentHomeBinding
+import metospherus.app.modules.GeneralBrain.sendMessage
 import metospherus.app.modules.GeneralCategory
-import metospherus.app.modules.GeneralMenstrualCycle
+import metospherus.app.modules.GeneralSearchResults
 import metospherus.app.modules.GeneralTemplate
-import metospherus.app.utilities.Constructor
 import metospherus.app.utilities.Constructor.hide
 import metospherus.app.utilities.Constructor.show
 import metospherus.app.utilities.MoluccusToast
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -91,6 +102,7 @@ class HomeFragment : Fragment() {
 
     private lateinit var mainAdapter: MainAdaptor
     private lateinit var categoryAdapter: CategoriesAdaptor
+    private lateinit var searchAdapter: SearchAdaptor
 
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseDatabase
@@ -164,12 +176,89 @@ class HomeFragment : Fragment() {
                 override fun onCancelled(error: DatabaseError) {}
             })
         }
+
+        setupMaterialSearchView()
+    }
+
+    private fun setupMaterialSearchView() {
+        val searchBar = view?.findViewById<SearchBar>(R.id.search_bar)
+        searchBar?.setOnClickListener {
+            MaterialDialog(requireContext(), BottomSheet(LayoutMode.MATCH_PARENT)).show {
+                customView(R.layout.search_results_answer_layout)
+                cornerRadius(literalDp = 20f)
+                setPeekHeight(Int.MAX_VALUE)
+
+                val searchRecyclerView = view.findViewById<RecyclerView>(R.id.searchResultsAnswer)
+                val searchableInputEditText =
+                    view.findViewById<TextInputEditText>(R.id.searchableInputEditText)
+
+                searchAdapter = SearchAdaptor(requireContext())
+                searchRecyclerView?.layoutManager = LinearLayoutManager(requireContext())
+                searchRecyclerView?.adapter = searchAdapter
+                val searchPreviewResults = mutableListOf(
+                    GeneralSearchResults(
+                        "Metospherus Comprehensive Medical System",
+                        "Welcome and thanks for trying out Trevus our system brain",
+                    ),
+                    GeneralSearchResults(
+                        "Metospherus Comprehensive Medical System",
+                        "Would you like me to help you with any inquiries"
+                    )
+                )
+                searchAdapter.setData(searchPreviewResults)
+                searchableInputEditText.doAfterTextChanged {
+                    val query = searchableInputEditText.text.toString()
+                    val matchingResults = searchPreviewResults.filter { result ->
+                        result.searchResponse.contains(query, ignoreCase = true)
+                    }
+                    when {
+                        matchingResults.isNullOrEmpty() -> {
+                            val repos = mutableListOf(
+                                GeneralSearchResults(
+                                    "...",
+                                    "...",
+                                ),
+                                GeneralSearchResults(
+                                    "...",
+                                    "...",
+                                ),
+                                GeneralSearchResults(
+                                    "...",
+                                    "...",
+                                ),
+                            )
+                            searchAdapter.setData(repos)
+
+                            searchRecyclerView.loadSkeleton {
+                                val customShimmer = Shimmer.AlphaHighlightBuilder()
+                                    .setDirection(Shimmer.Direction.TOP_TO_BOTTOM)
+                                    .build()
+                                shimmer(customShimmer)
+                            }
+
+                            searchableInputEditText.setOnEditorActionListener { _, actionId, _ ->
+                                if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
+                                    sendMessage(query, searchAdapter, searchRecyclerView)
+                                }
+                                true
+                            }
+                        }
+                        else -> {
+                            searchRecyclerView.hideSkeleton()
+                            searchAdapter.setData(matchingResults.toMutableList())
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
     override fun onResume() {
         super.onResume()
         getPermissionsTaskDB()
     }
+
     private fun getPermissionsTaskDB() {
         when {
             auth.currentUser != null -> {

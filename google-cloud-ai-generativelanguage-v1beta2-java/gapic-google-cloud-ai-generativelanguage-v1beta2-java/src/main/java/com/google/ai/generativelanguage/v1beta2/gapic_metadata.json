@@ -1,0 +1,54 @@
+{
+  "schema": "1.0",
+  "comment": "This file maps proto services/RPCs to the corresponding library clients/methods",
+  "language": "java",
+  "protoPackage": "google.ai.generativelanguage.v1beta2",
+  "libraryPackage": "com.google.ai.generativelanguage.v1beta2",
+  "services": {
+    "DiscussService": {
+      "clients": {
+        "grpc": {
+          "libraryClient": "DiscussServiceClient",
+          "rpcs": {
+            "CountMessageTokens": {
+              "methods": ["countMessageTokens", "countMessageTokens", "countMessageTokens", "countMessageTokensCallable"]
+            },
+            "GenerateMessage": {
+              "methods": ["generateMessage", "generateMessage", "generateMessage", "generateMessageCallable"]
+            }
+          }
+        }
+      }
+    },
+    "ModelService": {
+      "clients": {
+        "grpc": {
+          "libraryClient": "ModelServiceClient",
+          "rpcs": {
+            "GetModel": {
+              "methods": ["getModel", "getModel", "getModel", "getModelCallable"]
+            },
+            "ListModels": {
+              "methods": ["listModels", "listModels", "listModelsPagedCallable", "listModelsCallable"]
+            }
+          }
+        }
+      }
+    },
+    "TextService": {
+      "clients": {
+        "grpc": {
+          "libraryClient": "TextServiceClient",
+          "rpcs": {
+            "EmbedText": {
+              "methods": ["embedText", "embedText", "embedText", "embedTextCallable"]
+            },
+            "GenerateText": {
+              "methods": ["generateText", "generateText", "generateText", "generateTextCallable"]
+            }
+          }
+        }
+      }
+    }
+  }
+}

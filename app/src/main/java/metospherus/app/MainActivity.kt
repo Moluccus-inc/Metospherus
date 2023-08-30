@@ -28,10 +28,8 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.databinding.ActivityMainBinding
-import metospherus.app.modules.GeneralMenstrualCycle
 import metospherus.app.modules.GeneralReminders
 import metospherus.app.services.ScheduledRemindersManager
 import metospherus.app.update.UpdateUtil
@@ -78,6 +76,12 @@ class MainActivity : AppCompatActivity() {
                 db.getReference("participants").child(userId).child("fcmToken").setValue(userFCMToken)
             }
         }
+        checkUpdate()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        checkUpdate()
     }
 
     private fun initializeMedicalIntakeAlertSystem() {
@@ -102,7 +106,7 @@ class MainActivity : AppCompatActivity() {
                             scheduledReminders.add(scheduledList)
                         }
                     }
-                    ScheduledRemindersManager(this@MainActivity, auth, db).scheduleNotificationsUsingFCM(scheduledReminders)
+                    ScheduledRemindersManager(this@MainActivity).scheduleNotifications(scheduledReminders)
                 }
 
                 override fun onCancelled(error: DatabaseError) {

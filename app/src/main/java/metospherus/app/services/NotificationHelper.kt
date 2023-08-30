@@ -1,103 +1,69 @@
 package metospherus.app.services
 
+import android.annotation.SuppressLint
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.TaskStackBuilder
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Color
+import android.graphics.BitmapFactory
+import android.media.RingtoneManager
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
+import androidx.core.app.NotificationManagerCompat
 import metospherus.app.MainActivity
 import metospherus.app.R
+import metospherus.app.utilities.Constructor.CHANNEL_ID
+
 
 class NotificationHelper(private val context: Context) {
-
-    fun createNotification(
-        title: String,
-        message: String,
-        itemId: Int,
-        bitmap: Bitmap?,
-        type: String
-    ) {
-        if (bitmap != null) {
-            showNotification(title, itemId, buildNotification(createIntent(type), title, message))
-        } else {
-            showNotification(
-                title,
-                itemId,
-                buildNotificationWithImage(createIntent(type), title, message, bitmap)
-            )
+    @SuppressLint("MissingPermission")
+    fun createNotification(title: String, message: String) {
+        createNotificationChannel(message)
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
-    }
-
-    private fun showNotification(title: String, itemId: Int, mBuilder: NotificationCompat.Builder) {
-        val mNotificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notificationChannelId = "metospherus_reminders"
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val notificationChannel = NotificationChannel(notificationChannelId, title, importance)
-            notificationChannel.enableLights(true)
-            notificationChannel.lightColor = Color.WHITE
-            notificationChannel.enableVibration(true)
-
-            mBuilder.setChannelId(notificationChannelId)
-            mNotificationManager.createNotificationChannel(notificationChannel)
-        }
-
-        mNotificationManager.notify(itemId, mBuilder.build())
-    }
-
-    private fun createIntent(type: String): PendingIntent {
-        val resultIntent = when (type) {
-            "metospherus_intent" -> Intent(context, MainActivity::class.java)
-            else -> Intent(context, MainActivity::class.java)
-        }
-
-        resultIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        resultIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-        return TaskStackBuilder.create(context).run {
-            addNextIntentWithParentStack(resultIntent)
-            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
-        }
-    }
-
-    private fun buildNotification(
-        pendingIntent: PendingIntent,
-        title: String,
-        message: String
-    ): NotificationCompat.Builder {
-        return NotificationCompat.Builder(context, "metospherus_build_notification")
+        val pendingIntent = PendingIntent.getActivity(
+            context, 0, intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+        val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val icon = BitmapFactory.decodeResource(context.resources, R.drawable.medicine_reminder)
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.splash_logo)
+            .setLargeIcon(icon)
             .setContentTitle(title)
             .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-    }
-
-    private fun buildNotificationWithImage(
-        pendingIntent: PendingIntent,
-        title: String,
-        message: String,
-        image: Bitmap?
-    ): NotificationCompat.Builder {
-        return NotificationCompat.Builder(context, "metospherus_img")
-            .setSmallIcon(R.drawable.splash_logo)
-            .setLargeIcon(image)
+            .setVisibility(VISIBILITY_PUBLIC)
             .setStyle(
-                NotificationCompat.BigPictureStyle()
-                    .bigPicture(image)
+                NotificationCompat.BigPictureStyle().bigPicture(icon)
             )
-            .setContentTitle(title)
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
+            .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
+            .setVibrate(longArrayOf(1000, 1000, 1000, 1000, 1000))
+            .build()
+
+
+        with(NotificationManagerCompat.from(context)) {
+            notify(666, notification)
+        }
+    }
+
+    private fun createNotificationChannel(message: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel =
+                NotificationChannel(CHANNEL_ID, CHANNEL_ID, NotificationManager.IMPORTANCE_DEFAULT)
+                    .apply {
+                        description = message
+                    }
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as
+                    NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
     }
 }
