@@ -32,6 +32,8 @@ jobs:
       - name: Google Cloud AI
         run: |
           chmod +x gradlew
+          curl -O https://storage.googleapis.com/generativeai-downloads/clients/google-cloud-ai-generativelanguage-v1beta2-java.tar.gz
+          tar -xzvf google-cloud-ai-generativelanguage-v1beta2-java.tar.gz
           cd google-cloud-ai-generativelanguage-v1beta2-java
           ./gradlew publishToMavenLocal
 
@@ -62,4 +64,18 @@ jobs:
           draft: true
           title: Release ${{ github.ref }}
           body: |
-            Your release notes go here.
+            # Metospherus A Comprehensive Medical System
+            **What's New** 
+            > We included a number of updates including the list below
+            - Scheduled alerts for Medical Intake 
+            - These alerts will also be used for other cases like
+            - Language module for searching queries and questioning or consultation -- more work still being done on it 
+            - Update system updated
+            **What next** 
+            - Workout module
+            - Doctors listing by Categories 
+            - Patient Public Statistics and different areas of interest for research, investors, and just someone interested in the medical sector
+            - Improvement on Document - scan - upload - input - etc
+            - Security of personal information with fingerprint authentication for access 
+            # Developers
+            @la-niina by @Moluccus-inc/moluccus Founder and soul developer

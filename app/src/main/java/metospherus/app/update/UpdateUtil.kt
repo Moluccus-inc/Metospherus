@@ -14,7 +14,6 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
-import androidx.core.content.FileProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import metospherus.app.BuildConfig
 import metospherus.app.R
@@ -59,9 +58,12 @@ class UpdateUtil(var context: Context) {
                 val updateDialog = MaterialAlertDialogBuilder(context)
                     .setTitle(version)
                     .setMessage(body)
-                    .setIcon(R.drawable.file_download)
-                    .setNegativeButton("Cancel") { _: DialogInterface?, _: Int -> }
-                    .setPositiveButton("Update") { _: DialogInterface?, _: Int ->
+                    .setIcon(R.mipmap.ic_launcher_round)
+                    .setNegativeButton("Cancel") { dims: DialogInterface?, _: Int ->
+                        dims!!.dismiss()
+                    }
+                    .setPositiveButton("Update") { dims: DialogInterface?, _: Int ->
+                        dims!!.dismiss()
                         startAppUpdate(
                             res
                         )
@@ -127,7 +129,6 @@ class UpdateUtil(var context: Context) {
             }
             val uri = Uri.parse(url)
             val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val apkFile = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), appName)
             downloadsDir.mkdirs()
             val downloadRequest = DownloadManager.Request(uri)
                 .setAllowedNetworkTypes(
@@ -148,26 +149,14 @@ class UpdateUtil(var context: Context) {
                         val downloadCompletedId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
                         if (downloadCompletedId == downloadId) {
                             // Download completed, prompt user to install
-                            // Install the downloaded APK
                             val installIntent = Intent(Intent.ACTION_VIEW)
-                            val apkUri = FileProvider.getUriForFile(
-                                context!!,
-                                context.packageName + ".provider",
-                                apkFile
-                            )
+                            val apkUri = Uri.fromFile(File(downloadsDir, appName))
                             installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive")
-                            installIntent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                            context.startActivity(installIntent)
+                            installIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            context?.startActivity(installIntent)
 
-                            // Restart the application
-                            val packageManager = context.packageManager
-                            val launchIntent = packageManager.getLaunchIntentForPackage(context.packageName)
-                            launchIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-                            context.startActivity(launchIntent)
-
-                            apkFile.delete()
-
-                            context.unregisterReceiver(this)
+                            // Unregister the BroadcastReceiver
+                            context?.unregisterReceiver(this)
                         }
                     }
                 }

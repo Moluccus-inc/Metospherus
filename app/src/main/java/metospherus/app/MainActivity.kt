@@ -62,8 +62,6 @@ class MainActivity : AppCompatActivity() {
         preferences = PreferenceManager.getDefaultSharedPreferences(this)
         navController = findNavController(R.id.nav_host_fragment_content_main)
         appBarConfiguration = AppBarConfiguration(navController.graph)
-
-        checkUpdate()
     }
 
     override fun onResume() {
@@ -76,11 +74,7 @@ class MainActivity : AppCompatActivity() {
                 db.getReference("participants").child(userId).child("fcmToken").setValue(userFCMToken)
             }
         }
-        checkUpdate()
-    }
 
-    override fun onPause() {
-        super.onPause()
         checkUpdate()
     }
 
