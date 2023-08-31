@@ -5,7 +5,8 @@ data class GeneralDocuments(
     val documentShortDescription: String? = null,
     val documentDate: String? = null,
     val documentSyncStatus: String? = null,
-    val documentPreview: String? = null
+    val documentPreview: String? = null,
+    val documentNotes: String? = null,
 ) {
-    constructor() : this( null, null, null, null, null)
+    constructor() : this( null, null, null, null, null, null)
 }

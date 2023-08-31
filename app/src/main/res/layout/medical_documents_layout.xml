@@ -17,10 +17,13 @@
             android:id="@+id/searchDocuments"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:inputType="text"
+            android:maxLines="1"
+            android:drawablePadding="15dp"
             android:background="@android:color/transparent"
             android:drawableStart="@drawable/round_search"
             android:hint="Search for Medical Documents..."
-            android:padding="13dp" />
+            android:padding="15dp" />
     </com.google.android.material.card.MaterialCardView>
 
     <androidx.core.widget.NestedScrollView

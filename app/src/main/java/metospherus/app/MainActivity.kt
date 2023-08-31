@@ -26,9 +26,12 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import metospherus.app.database.localhost.AppDatabase
+import metospherus.app.database.profile_data.Profiles
 import metospherus.app.databinding.ActivityMainBinding
 import metospherus.app.modules.GeneralReminders
 import metospherus.app.services.ScheduledRemindersManager
@@ -76,17 +79,42 @@ class MainActivity : AppCompatActivity() {
         }
 
         checkUpdate()
+        getProfileDatilsIfExists()
     }
 
+    private fun getProfileDatilsIfExists() {
+        auth.currentUser?.uid?.let { userId ->
+            val profileDetails = db.getReference("participants").child(userId)
+            profileDetails.keepSynced(true)
+            profileDetails.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val userProfile = snapshot.getValue(Profiles::class.java)
+                    if (userProfile != null) {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            insertOrUpdateUserProfile(userProfile)
+                        }
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    MoluccusToast(this@MainActivity).showError("Cancelled because ${error.message}")
+                }
+            })
+        }
+    }
+
+    suspend fun insertOrUpdateUserProfile(userProfile: Profiles) {
+        withContext(Dispatchers.IO) {
+            appDatabase.profileLocal().insertOrUpdateUserPatient(userProfile)
+        }
+    }
     private fun initializeMedicalIntakeAlertSystem() {
         auth.currentUser?.let { currentUser ->
             val schedulingReferences = db.getReference("medicalmodules")
                 .child("userspecific")
                 .child("medicineIntake")
                 .child(currentUser.uid)
-
             schedulingReferences.keepSynced(true)
-
             val valueEventListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val scheduledReminders = mutableListOf<GeneralReminders>()
@@ -107,7 +135,6 @@ class MainActivity : AppCompatActivity() {
                     MoluccusToast(this@MainActivity).showError("Cancelled ${error.message}")
                 }
             }
-
             schedulingReferences.addValueEventListener(valueEventListener)
         }
     }

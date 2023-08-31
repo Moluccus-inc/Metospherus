@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.location.Address
 import android.location.Geocoder
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -17,15 +18,18 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
+import com.afollestad.materialdialogs.callbacks.onDismiss
+import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
 import com.bumptech.glide.Glide
-import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textfield.TextInputEditText
@@ -77,6 +81,7 @@ class ProfileFragment : Fragment() {
         return binding.root
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -88,7 +93,6 @@ class ProfileFragment : Fragment() {
         binding.backHolderKey.setOnClickListener {
             findNavController().navigate(R.id.action_home)
         }
-
         binding.editProfile.setOnClickListener {
             initProfileEditingIfNeeded()
         }
@@ -102,17 +106,8 @@ class ProfileFragment : Fragment() {
         }
     }
 
-    private fun initProfileDetailsIfNeeded() {
-        val dob = binding.dob
-        val userIdentification = binding.identifier
-        val userAddress = binding.address
-        val userName = binding.name
-        val userEmail = binding.email
-        val userPhone = binding.phoneNumber
-        val userHandle = binding.handle
-        val userAvatar = binding.avatar
-        val accountTypes = binding.accountTypes
-
+    override fun onResume() {
+        super.onResume()
         auth.currentUser?.uid?.let { userId ->
             val profileDetails = db.getReference("participants").child(userId)
             profileDetails.keepSynced(true)
@@ -124,30 +119,41 @@ class ProfileFragment : Fragment() {
                             insertOrUpdateUserProfile(userProfile)
                         }
                     }
-
-                    userName.text = snapshot.child("name").getValue(String::class.java) ?: "Unknown"
-                    userPhone.text = snapshot.child("phoneNumber").getValue(String::class.java) ?: "Unknown"
-                    userHandle.text = snapshot.child("handle").getValue(String::class.java) ?: "Unknown"
-                    userEmail.text = snapshot.child("email").getValue(String::class.java) ?: "Unknown@email.com"
-                    userAddress.text = snapshot.child("address").getValue(String::class.java) ?: "Unknown address"
-                    userIdentification.text = snapshot.child("userId").getValue(String::class.java) ?: "Unknown Id"
-                    dob.text = snapshot.child("dob").getValue(String::class.java) ?: "Unknown"
-                    accountTypes.text = snapshot.child("accountType").getValue(String::class.java) ?: "Unknown"
-
-                    Glide.with(requireContext())
-                        .load(snapshot.child("avatar").getValue(String::class.java))
-                        .centerCrop()
-                        .placeholder(R.drawable.holder)
-                        .into(userAvatar)
                 }
-
                 override fun onCancelled(error: DatabaseError) {
                     MoluccusToast(requireContext()).showError("Cancelled because ${error.message}")
                 }
             })
         }
     }
+    private fun initProfileDetailsIfNeeded() {
+        lifecycleScope.launch {
+            val userPatient = getUserProfilesFromDatabase(appDatabase)
+            if (userPatient != null) {
+                binding.name.text = userPatient.name ?: "Unknown"
+                binding.handle.text = userPatient.handle ?: "Unknown"
+                binding.address.text = userPatient.address ?: "Unknown Address"
+                binding.phoneNumber.text = userPatient.phoneNumber ?: "Unknown"
+                binding.accountTypes.text = userPatient.accountType ?: "Unknown Type"
+                binding.email.text = userPatient.email ?: "Unknown@email.com"
+                binding.dob.text = userPatient.dob ?: "Unknown"
+                binding.identifier.text = userPatient.userId ?: "Unknown"
 
+
+                binding.profileWeightTv.text = userPatient.weight ?: "Unknown"
+                binding.profileAllergiesTv.text = userPatient.allergies ?: "Unknown"
+                binding.bloodGroupTv.text = userPatient.blood_group ?: "Unknown"
+                binding.physicalHeightTv.text = userPatient.height ?: "Unknown"
+
+                Glide.with(requireContext())
+                    .load(userPatient.avatar)
+                    .placeholder(R.drawable.holder)
+                    .into(binding.avatar)
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
     @SuppressLint("ClickableViewAccessibility")
     private fun initProfileEditingIfNeeded() {
         MaterialDialog(requireContext(), BottomSheet(LayoutMode.WRAP_CONTENT)).show {
@@ -157,24 +163,28 @@ class ProfileFragment : Fragment() {
 
             val closeBottomSheetProfile = view.findViewById<ImageView>(R.id.CloseBottomSheetProfile)
             val preferredNameInput = view.findViewById<TextInputEditText>(R.id.preferredNameInput)
-            val genderIndentityInput = view.findViewById<TextInputEditText>(R.id.genderIndentityInput)
-            val primaryLocationInput = view.findViewById<TextInputEditText>(R.id.primaryLocationInput)
+            val genderIndentityInput =
+                view.findViewById<TextInputEditText>(R.id.genderIndentityInput)
+            val primaryLocationInput =
+                view.findViewById<TextInputEditText>(R.id.primaryLocationInput)
             val phoneNumberInput = view.findViewById<TextInputEditText>(R.id.phoneNumberInput)
 
             val fullLegalNameInput = view.findViewById<TextInputEditText>(R.id.fullLegalNameInput)
             val emailAddressInput = view.findViewById<TextInputEditText>(R.id.emailAddressInput)
             val userHeightInput = view.findViewById<TextInputEditText>(R.id.userHeightInput)
+            val profileAllergiesTextEdit =
+                view.findViewById<TextInputEditText>(R.id.profileAllergiesTextEdit)
+            val profileBloodGroupTextEdit =
+                view.findViewById<TextInputEditText>(R.id.profileBloodGroupTextEdit)
+            val profileHeightTextEdit =
+                view.findViewById<TextInputEditText>(R.id.profileHeightTextEdit)
+            val profileWeightTextEdit =
+                view.findViewById<TextInputEditText>(R.id.profileWeightTextEdit)
 
             val dateOfBirthInput = view.findViewById<TextInputEditText>(R.id.dateOfBirthInput)
-           // val faEnableCheckBox = view.findViewById<MaterialCheckBox>(R.id.faEnableCheckBox)
 
             imgAvatar = view.findViewById(R.id.imgAvatar)
             val imgUpload = view.findViewById<TextView>(R.id.imgUpload)
-
-           /** faEnableCheckBox.setOnCheckedChangeListener { compoundButton, b ->
-                // to do
-            } **/
-
 
             imgUpload.setOnClickListener {
                 pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -182,66 +192,81 @@ class ProfileFragment : Fragment() {
             primaryLocationInput.setOnClickListener {
                 fetchAddress(primaryLocationInput)
             }
-            preferredNameInput.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun afterTextChanged(p0: Editable?) {
-                    p0.let {
-                        if (it?.isNotEmpty() == true) {
-                            val inputs = it.toString().trim()
-                            updateFirebaseDatabase("name", inputs)
-                        }
+
+            profileAllergiesTextEdit.doAfterTextChanged { p0 ->
+                p0.let {
+                    if (it?.isNotEmpty() == true) {
+                        val inputs = it.toString().trim()
+                        updateFirebaseDatabase("allergies", inputs)
                     }
                 }
-            })
-            genderIndentityInput.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun afterTextChanged(p0: Editable?) {
-                    p0.let {
-                        if (it?.isNotEmpty() == true) {
-                            val inputs = it.toString().trim()
-                            updateFirebaseDatabase("gender", inputs)
-                        }
+            }
+            profileBloodGroupTextEdit.doAfterTextChanged { p0 ->
+                p0.let {
+                    if (it?.isNotEmpty() == true) {
+                        val inputs = it.toString().trim()
+                        updateFirebaseDatabase("blood_group", inputs)
                     }
                 }
-            })
-            primaryLocationInput.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun afterTextChanged(p0: Editable?) {
-                    p0.let {
-                        if (it?.isNotEmpty() == true) {
-                            val inputs = it.toString().trim()
-                            updateFirebaseDatabase("address", inputs)
-                        }
+            }
+            profileHeightTextEdit.doAfterTextChanged { p0 ->
+                p0.let {
+                    if (it?.isNotEmpty() == true) {
+                        val inputs = it.toString().trim()
+                        updateFirebaseDatabase("height", inputs)
                     }
                 }
-            })
-            fullLegalNameInput.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun afterTextChanged(p0: Editable?) {
-                    p0.let {
-                        if (it?.isNotEmpty() == true) {
-                            val inputs = it.toString().trim()
-                            updateFirebaseDatabase("legalName", inputs)
-                        }
+            }
+            profileWeightTextEdit.doAfterTextChanged { p0 ->
+                p0.let {
+                    if (it?.isNotEmpty() == true) {
+                        val inputs = it.toString().trim()
+                        updateFirebaseDatabase("weight", inputs)
                     }
                 }
-            })
-            userHeightInput.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun afterTextChanged(p0: Editable?) {
-                    p0.let {
-                        if (it?.isNotEmpty() == true) {
-                            val inputs = it.toString().trim()
-                            updateFirebaseDatabase("height", inputs)
-                        }
+            }
+
+            preferredNameInput.doAfterTextChanged { p0 ->
+                p0.let {
+                    if (it?.isNotEmpty() == true) {
+                        val inputs = it.toString().trim()
+                        updateFirebaseDatabase("name", inputs)
                     }
                 }
-            })
+            }
+            genderIndentityInput.doAfterTextChanged { p0 ->
+                p0.let {
+                    if (it?.isNotEmpty() == true) {
+                        val inputs = it.toString().trim()
+                        updateFirebaseDatabase("gender", inputs)
+                    }
+                }
+            }
+            primaryLocationInput.doAfterTextChanged { p0 ->
+                p0.let {
+                    if (it?.isNotEmpty() == true) {
+                        val inputs = it.toString().trim()
+                        updateFirebaseDatabase("address", inputs)
+                    }
+                }
+            }
+            fullLegalNameInput.doAfterTextChanged { p0 ->
+                p0.let {
+                    if (it?.isNotEmpty() == true) {
+                        val inputs = it.toString().trim()
+                        updateFirebaseDatabase("legalName", inputs)
+                    }
+                }
+            }
+            userHeightInput.doAfterTextChanged { p0 ->
+                p0.let {
+                    if (it?.isNotEmpty() == true) {
+                        val inputs = it.toString().trim()
+                        updateFirebaseDatabase("height", inputs)
+                    }
+                }
+            }
+
             dateOfBirthInput.setOnTouchListener { _, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
                     val builder = MaterialDatePicker.Builder.datePicker()
@@ -282,22 +307,31 @@ class ProfileFragment : Fragment() {
                 true
             }
 
-            lifecycleScope.launch {
-                val userPatient = getUserProfilesFromDatabase(appDatabase)
-                if (userPatient != null) {
-                    preferredNameInput.setText(userPatient.name)
-                    genderIndentityInput.setText(userPatient.gender)
-                    primaryLocationInput.setText(userPatient.address)
-                    phoneNumberInput.setText(userPatient.phoneNumber)
-                    fullLegalNameInput.setText(userPatient.legalName)
-                    emailAddressInput.setText(userPatient.email)
-                    dateOfBirthInput.setText(userPatient.dob)
-                    Glide.with(requireContext())
-                        .load(userPatient.avatar)
-                        .placeholder(R.drawable.holder)
-                        .into(imgAvatar)
+            onShow {
+                lifecycleScope.launch {
+                    val userPatient = getUserProfilesFromDatabase(appDatabase)
+                    if (userPatient != null) {
+                        preferredNameInput.setText(userPatient.name)
+                        genderIndentityInput.setText(userPatient.gender)
+                        primaryLocationInput.setText(userPatient.address)
+                        phoneNumberInput.setText(userPatient.phoneNumber)
+                        fullLegalNameInput.setText(userPatient.legalName)
+                        emailAddressInput.setText(userPatient.email)
+                        dateOfBirthInput.setText(userPatient.dob)
+
+                        profileWeightTextEdit.setText(userPatient.weight)
+                        profileAllergiesTextEdit.setText(userPatient.allergies)
+                        profileBloodGroupTextEdit.setText(userPatient.blood_group)
+                        profileHeightTextEdit.setText(userPatient.height)
+
+                        Glide.with(requireContext())
+                            .load(userPatient.avatar)
+                            .placeholder(R.drawable.holder)
+                            .into(imgAvatar)
+                    }
                 }
             }
+
             closeBottomSheetProfile.setOnClickListener {
                 dismiss()
             }
@@ -318,7 +352,8 @@ class ProfileFragment : Fragment() {
         val longitude = 0.0
         val geocoder = Geocoder(requireActivity(), Locale.getDefault())
         try {
-            val addresses: List<Address> = geocoder.getFromLocation(latitude, longitude, 1) as List<Address>
+            val addresses: List<Address> =
+                geocoder.getFromLocation(latitude, longitude, 1) as List<Address>
             if (addresses.isNotEmpty()) {
                 val address: Address = addresses[0]
                 val formattedAddress = address.getAddressLine(0)
@@ -337,7 +372,8 @@ class ProfileFragment : Fragment() {
         if (uid != null) {
             val storageRef = FirebaseStorage.getInstance().reference
             val fileExtension = MimeTypeMap.getFileExtensionFromUrl(imageUri.toString())
-            val imageRef = storageRef.child("participants/profile_images/$uid/${"avatar"}.$fileExtension")
+            val imageRef =
+                storageRef.child("participants/profile_images/$uid/${"avatar"}.$fileExtension")
             val uploadTask = imageRef.putFile(imageUri)
             uploadTask.addOnSuccessListener {
                 imageRef.downloadUrl.addOnSuccessListener { uri ->

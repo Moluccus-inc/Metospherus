@@ -63,42 +63,23 @@
                 android:layout_gravity="start"
                 android:layout_weight="1.5">
                 <TextView
+                    android:id="@+id/widgetMedicalReminders"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="55sp"
                     android:textStyle="bold"
                     android:layout_marginStart="5dp"
-                    android:text="3"/>
+                    android:text="0"/>
             </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:weightSum="3"
+                android:visibility="gone"
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:layout_weight="0.5">
-               <TextView
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content"
-                   android:layout_weight="1"
-                   android:padding="5dp"
-                   android:background="@drawable/custom_dialog_design"
-                   android:text="Name\ntime to take" />
-               <TextView
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content"
-                   android:layout_weight="1"
-                   android:padding="5dp"
-                   android:background="@drawable/custom_dialog_design"
-                   android:text="Name\ntime to take" />
-               <TextView
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content"
-                   android:layout_weight="1"
-                   android:padding="5dp"
-                   android:background="@drawable/custom_dialog_design"
-                   android:text="Name\ntime to take" />
             </LinearLayout>
         </LinearLayout>
 

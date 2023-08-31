@@ -67,5 +67,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".DeepLinkActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="metospherus.app"
+                    android:pathPrefix="/docs" />
+                <data android:host="metospherus.app"/>
+                <data android:pathPrefix="/docs"/>
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

@@ -34,7 +34,7 @@ android {
         //noinspection EditedTargetSdkVersion
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0.7"
+        versionName = "1.0.8"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -107,6 +107,7 @@ dependencies {
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.work:work-runtime-ktx:2.8.1")
+    implementation("androidx.biometric:biometric:1.1.0")
 
     // glide
     implementation("com.github.bumptech.glide:glide:4.15.1")
@@ -117,6 +118,7 @@ dependencies {
     implementation("com.afollestad.material-dialogs:lifecycle:3.2.1")
     implementation("com.afollestad.material-dialogs:datetime:3.2.1")
     implementation("com.afollestad.material-dialogs:bottomsheets:3.3.0")
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
     // ML dependencies
     implementation("com.google.cloud:gapic-google-cloud-ai-generativelanguage-v1beta2-java:0.0.0-SNAPSHOT")
@@ -127,6 +129,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-config-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.firebaseui:firebase-ui-auth:7.2.0")
     implementation("com.google.android.play:integrity:1.2.0")

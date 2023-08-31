@@ -1,5 +1,7 @@
 package metospherus.app.modules
 
+import android.content.Context
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.ai.generativelanguage.v1beta2.DiscussServiceClient
 import com.google.ai.generativelanguage.v1beta2.DiscussServiceSettings
@@ -10,19 +12,21 @@ import com.google.ai.generativelanguage.v1beta2.MessagePrompt
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider
 import com.google.api.gax.rpc.FixedHeaderProvider
+import com.hbb20.countrypicker.logger.methodStartTimeMap
 import koleton.api.hideSkeleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import metospherus.app.adaptors.SearchAdaptor
+import kotlin.concurrent.thread
 
 
 object GeneralBrain {
-    private fun initializeDiscussServiceClient(): DiscussServiceClient {
+    private fun initializeDiscussServiceClient(appVer: String): DiscussServiceClient {
         // (This is a workaround because GAPIC java libraries don't yet support API key auth)
         val transportChannelProvider = InstantiatingGrpcChannelProvider.newBuilder()
-            .setHeaderProvider(FixedHeaderProvider.create(hashMapOf("x-goog-api-key" to "AIzaSyBv20tSIsAb-bDFXDMV6dgaTOKl6Lh-vd0")))
+            .setHeaderProvider(FixedHeaderProvider.create(hashMapOf("x-goog-api-key" to appVer)))
             .build()
 
         // Create DiscussServiceSettings
@@ -53,7 +57,7 @@ object GeneralBrain {
         messageContent: String
     ): MessagePrompt {
         val palmMessage = Message.newBuilder()
-            .setAuthor("Metospherus")
+            .setAuthor("Metospherus - Comprehensive Medical System")
             .setContent(messageContent)
             .build()
 
@@ -79,6 +83,7 @@ object GeneralBrain {
     }
 
     fun sendMessage(
+        context: Context,
         userInput: String,
         searchAdapter: SearchAdaptor,
         searchRecyclerView: RecyclerView
@@ -86,17 +91,19 @@ object GeneralBrain {
         val prompt = createPrompt(userInput)
         val response = createMessageRequest(prompt)
 
-        generateMessage(response, searchAdapter, searchRecyclerView)
+        generateMessage(context,response, searchAdapter, searchRecyclerView)
     }
 
     private fun generateMessage(
+        context: Context,
         request: GenerateMessageRequest,
         searchAdapter: SearchAdaptor,
         searchRecyclerView: RecyclerView
     ) {
-        val discussServiceClient = initializeDiscussServiceClient()
-        val messageContent =
-            discussServiceClient.generateMessage(request).candidatesList.lastOrNull()
+        val sharedPreferences =  PreferenceManager.getDefaultSharedPreferences(context)
+        val appVer = sharedPreferences.getString("api_key", "")!!
+        val discussServiceClient = initializeDiscussServiceClient(appVer)
+        val messageContent = discussServiceClient.generateMessage(request).candidatesList.lastOrNull()
 
         CoroutineScope(Dispatchers.Main).launch {
             if (messageContent != null) {

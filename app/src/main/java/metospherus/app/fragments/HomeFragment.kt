@@ -2,15 +2,20 @@ package metospherus.app.fragments
 
 import android.annotation.SuppressLint
 import android.database.Cursor
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.Editable
 import android.text.InputType
+import android.text.Spannable
+import android.text.SpannableStringBuilder
 import android.text.TextWatcher
+import android.text.style.StyleSpan
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent.PointerProperties
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -23,7 +28,9 @@ import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.annotation.StyleRes
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.text.toSpannable
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
@@ -71,6 +78,7 @@ import `in`.aabhasjindal.otptextview.OtpTextView
 import koleton.api.hideSkeleton
 import koleton.api.isSkeletonShown
 import koleton.api.loadSkeleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -85,6 +93,7 @@ import metospherus.app.modules.GeneralBrain.sendMessage
 import metospherus.app.modules.GeneralCategory
 import metospherus.app.modules.GeneralSearchResults
 import metospherus.app.modules.GeneralTemplate
+import metospherus.app.utilities.Constructor
 import metospherus.app.utilities.Constructor.hide
 import metospherus.app.utilities.Constructor.show
 import metospherus.app.utilities.MoluccusToast
@@ -161,25 +170,17 @@ class HomeFragment : Fragment() {
             }
         }
 
-        lifecycleScope.launch {
-            val avatarProfile = db.getReference("participants").child(auth.currentUser!!.uid)
-                .child("avatar")
-            avatarProfile.keepSynced(true)
-            avatarProfile.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    Glide.with(requireContext())
-                        .load(snapshot.getValue(String::class.java))
-                        .placeholder(R.drawable.holder)
-                        .into(binding.profilePicture)
-                }
-
-                override fun onCancelled(error: DatabaseError) {}
-            })
+        CoroutineScope(Dispatchers.Main).launch {
+            val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
+            if (userPatient != null) {
+                Glide.with(requireContext())
+                    .load(userPatient.avatar)
+                    .placeholder(R.drawable.holder)
+                    .into(binding.profilePicture)
+            }
         }
-
         setupMaterialSearchView()
     }
-
     private fun setupMaterialSearchView() {
         val searchBar = view?.findViewById<SearchBar>(R.id.search_bar)
         searchBar?.setOnClickListener {
@@ -226,6 +227,14 @@ class HomeFragment : Fragment() {
                                     "...",
                                     "...",
                                 ),
+                                GeneralSearchResults(
+                                    "...",
+                                    "...",
+                                ),
+                                GeneralSearchResults(
+                                    "...",
+                                    "...",
+                                ),
                             )
                             searchAdapter.setData(repos)
 
@@ -238,7 +247,7 @@ class HomeFragment : Fragment() {
 
                             searchableInputEditText.setOnEditorActionListener { _, actionId, _ ->
                                 if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
-                                    sendMessage(query, searchAdapter, searchRecyclerView)
+                                    sendMessage(context, query, searchAdapter, searchRecyclerView)
                                 }
                                 true
                             }
@@ -253,12 +262,10 @@ class HomeFragment : Fragment() {
         }
 
     }
-
     override fun onResume() {
         super.onResume()
         getPermissionsTaskDB()
     }
-
     private fun getPermissionsTaskDB() {
         when {
             auth.currentUser != null -> {
@@ -303,7 +310,6 @@ class HomeFragment : Fragment() {
             }
         }
     }
-
     private fun initCompleteUserProfile(usrDb: DatabaseReference) {
         MaterialDialog(requireContext()).show {
             customView(R.layout.activity_complete_user_profile)
@@ -404,8 +410,7 @@ class HomeFragment : Fragment() {
 
                     else -> {
                         val uidSubstring = auth.currentUser?.uid
-                        val uidDigits =
-                            uidSubstring?.hashCode()?.toString()?.replace("-", "")?.take(12)
+                        val uidDigits = uidSubstring?.hashCode()?.toString()?.replace("-", "")?.take(12)
                         val userIdentification = "$accountTypePrefix$uidDigits"
 
                         val addProfileDetails = mapOf(
@@ -430,7 +435,6 @@ class HomeFragment : Fragment() {
             }
         }
     }
-
     private fun isValidEmail(email: String): Boolean {
         val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
         return email.matches(emailPattern.toRegex())
@@ -490,8 +494,7 @@ class HomeFragment : Fragment() {
                 cornerRadius(20f)
                 cancelOnTouchOutside(false)
 
-                val profileActionLayout =
-                    view.findViewById<MaterialCardView>(R.id.profileActionLayout)
+                val profileActionLayout = view.findViewById<MaterialCardView>(R.id.profileActionLayout)
                 val closeHolder = view.findViewById<ImageView>(R.id.closeHolder)
                 val profileImage = view.findViewById<ImageView>(R.id.profileImage)
 
@@ -508,33 +511,6 @@ class HomeFragment : Fragment() {
                     dismiss()
                 }
 
-                auth.currentUser?.uid?.let { userId ->
-                    val profileDetails = db.getReference("participants").child(userId)
-                    profileDetails.keepSynced(true)
-                    profileDetails.addValueEventListener(object : ValueEventListener {
-                        override fun onDataChange(snapshot: DataSnapshot) {
-
-                            prefName.text =
-                                snapshot.child("name").getValue(String::class.java) ?: "Unknown"
-                            profileHandler.text =
-                                snapshot.child("handle").getValue(String::class.java) ?: "Unknown"
-                            profileType.text =
-                                snapshot.child("accountType").getValue(String::class.java)
-                                    ?: "Unknown Type"
-
-                            Glide.with(requireContext())
-                                .load(snapshot.child("avatar").getValue(String::class.java))
-                                .centerCrop()
-                                .placeholder(R.drawable.holder)
-                                .into(profileImage)
-                        }
-
-                        override fun onCancelled(error: DatabaseError) {
-                            MoluccusToast(requireContext()).showError("Cancelled because ${error.message}")
-                        }
-                    })
-                }
-
                 onShow {
                     val displayMetrics = windowContext.resources.displayMetrics
                     val dialogWidth =
@@ -542,6 +518,20 @@ class HomeFragment : Fragment() {
                             R.dimen.dialog_margin_horizontal
                         ))
                     window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
+
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
+                        if (userPatient != null) {
+                            prefName.text = userPatient.name
+                            profileType.text = userPatient.accountType
+                            profileHandler.text = userPatient.handle
+
+                            Glide.with(requireContext())
+                                .load(userPatient.avatar)
+                                .placeholder(R.drawable.holder)
+                                .into(profileImage)
+                        }
+                    }
                 }
             }
         }
@@ -817,11 +807,11 @@ class HomeFragment : Fragment() {
                     cornerRadius(literalDp = 20f)
 
                     val documentTitle = view.findViewById<TextInputEditText>(R.id.documentTitle)
-                    val shortDescription =
-                        view.findViewById<TextInputEditText>(R.id.shortDescription)
-                    val medicalFacilityName =
-                        view.findViewById<TextInputEditText>(R.id.medicalFacilityName)
+                    val shortDescription = view.findViewById<TextInputEditText>(R.id.shortDescription)
+                    val medicalFacilityName = view.findViewById<TextInputEditText>(R.id.medicalFacilityName)
                     val uploadFileOrImage = view.findViewById<ImageView>(R.id.uploadFileOrImage)
+                    val medicalNotes = view.findViewById<TextInputEditText>(R.id.medicalNotes)
+
                     imageHolder = view.findViewById(R.id.imageHolder)
 
                     uploadFileOrImage.setOnClickListener {
@@ -850,7 +840,7 @@ class HomeFragment : Fragment() {
                     }
 
                     positiveButton(text = "Add Medical Record") {
-                        if (documentTitle.text!!.isNotEmpty() || shortDescription.text!!.isNotEmpty() || medicalFacilityName.text!!.isNotEmpty()) {
+                        if (documentTitle.text!!.isNotEmpty() || shortDescription.text!!.isNotEmpty() || medicalFacilityName.text!!.isNotEmpty() || medicalNotes.text!!.isNotEmpty()) {
                             selectedImageLiveData.observe(viewLifecycleOwner) { selectedImageUri ->
                                 if (selectedImageUri != null) {
                                     val uid = auth.currentUser?.uid
@@ -890,11 +880,9 @@ class HomeFragment : Fragment() {
                                                 }
                                             }
                                         }
-                                        val extension =
-                                            fileName?.substring(fileName.lastIndexOf(".") + 1)
+                                        val extension = fileName?.substring(fileName.lastIndexOf(".") + 1)
 
-                                        val imageRef =
-                                            storageRef.child("MedicalDocuments/$uid/${documentTitle.text!!.trim()}.$extension")
+                                        val imageRef = storageRef.child("MedicalDocuments/$uid/${documentTitle.text!!.trim()}.$extension")
                                         val uploadTask = imageRef.putFile(selectedImageUri)
                                         uploadTask.addOnSuccessListener {
                                             imageRef.downloadUrl.addOnSuccessListener { uri ->
@@ -906,16 +894,15 @@ class HomeFragment : Fragment() {
                                                     Locale.getDefault()
                                                 )
 
-                                                val date =
-                                                    dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
+                                                val date = dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
 
                                                 val medicalRecord = mapOf(
-                                                    "documentTitle" to documentTitle.text!!.trim()
-                                                        .toString(),
-                                                    "documentShortDescription" to shortDescription.text!!.trim()
-                                                        .toString(),
+                                                    "documentOwnId" to auth.currentUser!!.uid,
+                                                    "documentTitle" to documentTitle.text!!.trim().toString(),
+                                                    "documentShortDescription" to shortDescription.text!!.trim().toString(),
                                                     "documentDate" to date.toString(),
                                                     "documentSyncStatus" to "Synced",
+                                                    "documentNotes" to medicalNotes.text!!.trim().toString().replace(".", ".\n\n").replace("?", "?\n\n").replace("\n\n ", "\n\n"),
                                                     "documentPreview" to uri.toString()
                                                 )
                                                 db.getReference("MedicalDocuments")

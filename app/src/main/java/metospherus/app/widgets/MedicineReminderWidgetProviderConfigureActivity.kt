@@ -10,9 +10,6 @@ import android.widget.EditText
 import metospherus.app.R
 import metospherus.app.databinding.MedicineReminderWidgetProviderConfigureBinding
 
-/**
- * The configuration screen for the [MedicineReminderWidgetProvider] AppWidget.
- */
 class MedicineReminderWidgetProviderConfigureActivity : Activity() {
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
     private lateinit var appWidgetText: EditText

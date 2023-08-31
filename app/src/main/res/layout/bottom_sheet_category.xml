@@ -28,4 +28,14 @@
         android:id="@+id/medicalDocuments"
         android:visibility="gone"
         layout="@layout/medical_documents_layout"/>
+
+    <include
+        android:id="@+id/patientsStatistics"
+        android:visibility="gone"
+        layout="@layout/patients_and_general_statistics"/>
+
+    <include
+        android:id="@+id/medicalProfessional"
+        android:visibility="gone"
+        layout="@layout/medical_professionals_layout"/>
 </LinearLayout>

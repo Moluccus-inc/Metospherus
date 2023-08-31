@@ -1,16 +1,21 @@
 package metospherus.app.widgets
 
+import android.annotation.SuppressLint
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.widget.RemoteViews
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.graphics.drawable.toBitmap
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.ktx.Firebase
 import metospherus.app.R
-
-/**
- * Implementation of App Widget functionality.
- * App Widget Configuration implemented in [MedicineReminderWidgetProviderConfigureActivity]
- */
 class MedicineReminderWidgetProvider : AppWidgetProvider() {
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -23,19 +28,13 @@ class MedicineReminderWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        // When the user deletes the widget, delete the preference associated with it.
+        // When the user deletes the widget, delete any associated preferences or data
         for (appWidgetId in appWidgetIds) {
-            deleteTitlePref(context, appWidgetId)
+            // Delete preferences or data related to appWidgetId
         }
     }
 
-    override fun onEnabled(context: Context) {
-        // Enter relevant functionality for when the first widget is created
-    }
-
-    override fun onDisabled(context: Context) {
-        // Enter relevant functionality for when the last widget is disabled
-    }
+    // Override other lifecycle methods as needed
 }
 
 internal fun updateAppWidget(
@@ -43,11 +42,32 @@ internal fun updateAppWidget(
     appWidgetManager: AppWidgetManager,
     appWidgetId: Int
 ) {
-    val widgetText = loadTitlePref(context, appWidgetId)
-    // Construct the RemoteViews object
     val views = RemoteViews(context.packageName, R.layout.medicine_reminder_widget_provider)
-    views.setTextViewText(R.id.appwidget_text, widgetText)
+    val auth = Firebase.auth.currentUser
+    val db = FirebaseDatabase.getInstance()
 
-    // Instruct the widget manager to update the widget
-    appWidgetManager.updateAppWidget(appWidgetId, views)
+    if (auth != null) {
+        val databaseRefWidget = db.getReference("medicalmodules")
+            .child("userspecific").child("medicineIntake")
+            .child(auth.uid)
+        databaseRefWidget.keepSynced(true)
+        databaseRefWidget.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    val remindersCount = snapshot.childrenCount.toString()
+                    views.setTextViewText(R.id.widgetMedicalReminders, remindersCount)
+                    // Update other views in the widget as needed
+                    appWidgetManager.updateAppWidget(appWidgetId, views)
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Handle onCancelled as needed
+            }
+        })
+    } else {
+        views.setTextViewText(R.id.widgetMedicalReminders, "0")
+        // Update other views in the widget as needed
+        appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
 }

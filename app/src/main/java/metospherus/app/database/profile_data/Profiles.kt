@@ -22,6 +22,30 @@ data class Profiles(
     val active_time: String? = null,
     val active_status: Boolean? = false,
     val dob: String? = null,
+    val allergies: String? = null,
+    val blood_group: String? = null,
+    val height: String? = null,
+    val weight: String? = null,
 ) {
-    constructor() : this(0, null, null, null, null, null, null, null, null, null, null, null, null, false, null)
+    constructor() : this(
+        0,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        false,
+        null,
+        null,
+        null,
+        null,
+        null
+    )
 }

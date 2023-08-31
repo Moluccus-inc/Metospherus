@@ -12,6 +12,9 @@ import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderF
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.ktx.initialize
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -38,6 +41,21 @@ class App : Application() {
         applicationScope = CoroutineScope(SupervisorJob())
         applicationScope.launch((Dispatchers.IO)) {
             try {
+                val remoteConfig: FirebaseRemoteConfig = Firebase.remoteConfig
+                val configSettings = remoteConfigSettings {
+                    minimumFetchIntervalInSeconds = 3600
+                }
+                remoteConfig.setConfigSettingsAsync(configSettings)
+                remoteConfig.fetchAndActivate()
+                    .addOnCompleteListener {
+                        if (it.isSuccessful) {
+                            val apiKey = remoteConfig.getString("APIKEY")
+                            sharedPreferences.edit().putString("api_key", apiKey).apply()
+                        } else {
+                            MoluccusToast(this@App).showError("API KEY NOT FOUND ${it.exception?.message}")
+                        }
+                    }
+
                 val appVer = sharedPreferences.getString("version", "")!!
                 if(appVer.isEmpty() || appVer != BuildConfig.VERSION_NAME){
                     sharedPreferences.edit(commit = true){
