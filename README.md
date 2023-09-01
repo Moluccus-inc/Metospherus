@@ -4,7 +4,7 @@
   <img src="https://raw.githubusercontent.com/Moluccus-inc/Metospherus/master/app/src/main/res/drawable/metospherus.png" alt="Metospherus Logo"/>
 </p>
 
-Welcome to Metospherus, a groundbreaking Comprehensive Medical System that redefines healthcare by integrating all aspects of the medical sector, from patients and doctors to nurses, pharmacies, shipping, communication, intensive care, donations, and more. Metospherus is designed to provide a holistic approach to healthcare, putting the power of the entire medical ecosystem at your fingertips.
+> Welcome to Metospherus, a groundbreaking Comprehensive Medical System that redefines healthcare by integrating all aspects of the medical sector, from patients and doctors to nurses, pharmacies, shipping, communication, intensive care, donations, and more. Metospherus is designed to provide a holistic approach to healthcare, putting the power of the entire medical ecosystem at your fingertips.
 
 ## Disclaimer
 - ⚠️ The project is under very active development.
@@ -13,7 +13,7 @@ Welcome to Metospherus, a groundbreaking Comprehensive Medical System that redef
 - ⚠️ I kindly request everyone to ask questions and engage in discussions in a friendly manner.
 
 ## Concept
-Metospherus envisions a future where healthcare is seamless, interconnected, and easily accessible. By consolidating all medical sectors into a single platform, we empower individuals to manage their health efficiently while fostering collaboration among healthcare professionals.
+> Metospherus envisions a future where healthcare is seamless, interconnected, and easily accessible. By consolidating all medical sectors into a single platform, we empower individuals to manage their health efficiently while fostering collaboration among healthcare professionals.
 
 ## Features
 - **User-Centric Ecosystem:** Metospherus encompasses patients, doctors, nurses, pharmacies, and more, enabling seamless interaction and data sharing.
@@ -26,24 +26,27 @@ Metospherus envisions a future where healthcare is seamless, interconnected, and
 
 ## Hardware and Software Capabilities
 Metospherus leverages cutting-edge technology to provide robust and secure healthcare services:
-- **Advanced AI Models:** Powering predictive analysis, disease detection, and personalized recommendations for users.
-- **Real-time Monitoring Devices:** Integration with wearable devices for continuous health tracking and data sharing.
-- **Secure Communication Protocols:** Ensuring all data exchange is encrypted and privacy is maintained.
+> **Advanced AI Models:** Powering predictive analysis, disease detection, and personalized recommendations for users.
+> **Real-time Monitoring Devices:** Integration with wearable devices for continuous health tracking and data sharing.
+> **Secure Communication Protocols:** Ensuring all data exchange is encrypted and privacy is maintained.
 
 ## AI Models and Dataset Sector of Structure
 Metospherus employs sophisticated AI models to enhance healthcare services:
-- **Disease Diagnosis:** AI-driven tools for early disease detection, improving patient outcomes.
-- **Health Predictions:** Analyzing user data to provide insights into potential health risks and preventive measures.
-- **Drug Interaction Analysis:** Identifying potential drug interactions and allergies to enhance medication safety.
+> **Disease Diagnosis:** AI-driven tools for early disease detection, improving patient outcomes.
+> **Health Predictions:** Analyzing user data to provide insights into potential health risks and preventive measures.
+> **Drug Interaction Analysis:** Identifying potential drug interactions and allergies to enhance medication safety.
 
 ## Contribution Guidelines
 We invite the community to contribute to the evolution of Metospherus:
-- Fork the repository and make your improvements.
-- Submit pull requests for review and integration.
+> Fork the repository and make your improvements.
+> Submit pull requests for review and integration.
 
 ## Developers
-- [la niina](https://github.com/la-niina) - Connect with me on GitHub: [@la-niina](https://github.com/la-niina)
+> [la niina](https://github.com/la-niina) - Connect with me on GitHub: [@la-niina](https://github.com/la-niina)
 Metospherus is more than an app; it's a revolution in healthcare technology. Join us in shaping the future of healthcare accessibility and effectiveness.
 For inquiries, suggestions, or support, please get in touch with us at la.niin.me@gmail.com.
+
+## All Rights Reserved
+> Refer to our copyrights Readme. md @Moluccus-inc/moluccus/Metospherus/](https://github.com/Moluccus-inc/Metospherus/blob/master/LICENSE.md
 
 © 2023 Metospherus. All rights reserved.
