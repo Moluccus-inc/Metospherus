@@ -1,24 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/containerGen"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="5dp"
     android:layout_gravity="center"
-    app:cardCornerRadius="10dp"
-    android:id="@+id/containerGen"
-    style="@style/Widget.Material3.CardView.Elevated">
+    android:layout_margin="5dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:checkable="true"
+    app:cardCornerRadius="10dp">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/templateImageView"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/checkedOrUnchecked"
+            style="@style/Widget.Material3.CardView.Elevated"
             android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:scaleType="centerCrop"
-            android:maxHeight="150dp"
-            app:srcCompat="@drawable/holder"/>
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/templateImageView"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:maxHeight="150dp"
+                android:scaleType="centerCrop"
+                app:srcCompat="@drawable/holder" />
+        </com.google.android.material.card.MaterialCardView>
         <TextView
             android:id="@+id/templateTitle"
             android:layout_width="wrap_content"
@@ -26,8 +35,8 @@
             android:layout_gravity="center"
             android:gravity="center"
             android:padding="10dp"
-            android:textStyle="bold"
+            android:text="Medical Intake"
             android:textSize="13sp"
-            android:text="Medical Intake"/>
+            android:textStyle="bold" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

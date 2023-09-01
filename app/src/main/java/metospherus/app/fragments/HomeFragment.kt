@@ -2,20 +2,15 @@ package metospherus.app.fragments
 
 import android.annotation.SuppressLint
 import android.database.Cursor
-import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.Editable
 import android.text.InputType
-import android.text.Spannable
-import android.text.SpannableStringBuilder
 import android.text.TextWatcher
-import android.text.style.StyleSpan
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.MotionEvent.PointerProperties
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -28,9 +23,7 @@ import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.annotation.StyleRes
 import androidx.appcompat.widget.LinearLayoutCompat
-import androidx.core.text.toSpannable
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
@@ -76,7 +69,6 @@ import com.hbb20.countrypicker.models.CPCountry
 import `in`.aabhasjindal.otptextview.OTPListener
 import `in`.aabhasjindal.otptextview.OtpTextView
 import koleton.api.hideSkeleton
-import koleton.api.isSkeletonShown
 import koleton.api.loadSkeleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -93,6 +85,7 @@ import metospherus.app.modules.GeneralBrain.sendMessage
 import metospherus.app.modules.GeneralCategory
 import metospherus.app.modules.GeneralSearchResults
 import metospherus.app.modules.GeneralTemplate
+import metospherus.app.utilities.AddOrRemoveModules
 import metospherus.app.utilities.Constructor
 import metospherus.app.utilities.Constructor.hide
 import metospherus.app.utilities.Constructor.show
@@ -162,6 +155,10 @@ class HomeFragment : Fragment() {
             initBottomSheets()
         }
 
+        binding.addRemoveAvailableModules.setOnClickListener {
+            AddOrRemoveModules().addOrRemoveModules(requireContext(), db, auth)
+        }
+
         binding.profileHolder.setOnClickListener {
             if (auth.currentUser != null) {
                 initProfileSheetIfNeeded()
@@ -181,6 +178,7 @@ class HomeFragment : Fragment() {
         }
         setupMaterialSearchView()
     }
+
     private fun setupMaterialSearchView() {
         val searchBar = view?.findViewById<SearchBar>(R.id.search_bar)
         searchBar?.setOnClickListener {
@@ -252,6 +250,7 @@ class HomeFragment : Fragment() {
                                 true
                             }
                         }
+
                         else -> {
                             searchRecyclerView.hideSkeleton()
                             searchAdapter.setData(matchingResults.toMutableList())
@@ -262,10 +261,12 @@ class HomeFragment : Fragment() {
         }
 
     }
+
     override fun onResume() {
         super.onResume()
         getPermissionsTaskDB()
     }
+
     private fun getPermissionsTaskDB() {
         when {
             auth.currentUser != null -> {
@@ -310,6 +311,7 @@ class HomeFragment : Fragment() {
             }
         }
     }
+
     private fun initCompleteUserProfile(usrDb: DatabaseReference) {
         MaterialDialog(requireContext()).show {
             customView(R.layout.activity_complete_user_profile)
@@ -410,7 +412,8 @@ class HomeFragment : Fragment() {
 
                     else -> {
                         val uidSubstring = auth.currentUser?.uid
-                        val uidDigits = uidSubstring?.hashCode()?.toString()?.replace("-", "")?.take(12)
+                        val uidDigits =
+                            uidSubstring?.hashCode()?.toString()?.replace("-", "")?.take(12)
                         val userIdentification = "$accountTypePrefix$uidDigits"
 
                         val addProfileDetails = mapOf(
@@ -435,6 +438,7 @@ class HomeFragment : Fragment() {
             }
         }
     }
+
     private fun isValidEmail(email: String): Boolean {
         val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
         return email.matches(emailPattern.toRegex())
@@ -464,26 +468,41 @@ class HomeFragment : Fragment() {
     }
 
     private fun initializeTracker() {
-        val patientGeneralModulesDB = db.getReference("medicalmodules").child("modules")
-        patientGeneralModulesDB.keepSynced(true)
-        patientGeneralModulesDB.addValueEventListener(object : ValueEventListener {
-            val moduleTemps = mutableListOf<GeneralTemplate>()
-            override fun onDataChange(snapshot: DataSnapshot) {
-                moduleTemps.clear()
-                for (dataSnapshot in snapshot.children) {
-                    val modulesData = dataSnapshot.getValue(GeneralTemplate::class.java)
-                    if (modulesData?.selected == true) {
-                        moduleTemps.add(modulesData)
+        recyclerViewTracker.adapter = mainAdapter
+        auth.currentUser?.let { currentUser ->
+            val patientGeneralModulesDB = db.getReference("medicalmodules")
+                .child("userspecific")
+                .child("modules").child(currentUser.uid)
+            patientGeneralModulesDB.keepSynced(true)
+            patientGeneralModulesDB.addValueEventListener(object : ValueEventListener {
+                val moduleTemps = mutableListOf<GeneralTemplate>()
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    moduleTemps.clear()
+                    for (snapshotItem in snapshot.children) {
+                        val modulesData = snapshotItem.getValue(GeneralTemplate::class.java)
+                        if (modulesData != null) {
+                            if (modulesData.selected == true) {
+                                moduleTemps.add(modulesData)
+                            }
+                        }
                     }
+                    mainAdapter.setData(moduleTemps)
                 }
-                mainAdapter.setData(moduleTemps)
-                recyclerViewTracker.adapter = mainAdapter
-            }
 
-            override fun onCancelled(error: DatabaseError) {
-                MoluccusToast(requireContext()).showError("Cancelled ${error.message}")
-            }
-        })
+                override fun onCancelled(error: DatabaseError) {
+                    MoluccusToast(requireContext()).showError("Cancelled ${error.message}")
+                }
+            })
+        }
+
+        val notLoggedIn = mutableListOf(
+            GeneralTemplate(
+                "General Health",
+                getString(R.string.app_default_module_url),
+                true,
+            )
+        )
+        mainAdapter.setData(notLoggedIn)
     }
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -494,7 +513,8 @@ class HomeFragment : Fragment() {
                 cornerRadius(20f)
                 cancelOnTouchOutside(false)
 
-                val profileActionLayout = view.findViewById<MaterialCardView>(R.id.profileActionLayout)
+                val profileActionLayout =
+                    view.findViewById<MaterialCardView>(R.id.profileActionLayout)
                 val closeHolder = view.findViewById<ImageView>(R.id.closeHolder)
                 val profileImage = view.findViewById<ImageView>(R.id.profileImage)
 
@@ -543,6 +563,7 @@ class HomeFragment : Fragment() {
             customView(R.layout.authentication_layout)
             cornerRadius(20f)
             cancelOnTouchOutside(false)
+            setPeekHeight(Int.MAX_VALUE)
 
             val imgFlagHolder = view.findViewById<TextView>(R.id.imgFlagHolder)
             val countryName = view.findViewById<TextView>(R.id.countryName)
@@ -807,8 +828,10 @@ class HomeFragment : Fragment() {
                     cornerRadius(literalDp = 20f)
 
                     val documentTitle = view.findViewById<TextInputEditText>(R.id.documentTitle)
-                    val shortDescription = view.findViewById<TextInputEditText>(R.id.shortDescription)
-                    val medicalFacilityName = view.findViewById<TextInputEditText>(R.id.medicalFacilityName)
+                    val shortDescription =
+                        view.findViewById<TextInputEditText>(R.id.shortDescription)
+                    val medicalFacilityName =
+                        view.findViewById<TextInputEditText>(R.id.medicalFacilityName)
                     val uploadFileOrImage = view.findViewById<ImageView>(R.id.uploadFileOrImage)
                     val medicalNotes = view.findViewById<TextInputEditText>(R.id.medicalNotes)
 
@@ -880,9 +903,11 @@ class HomeFragment : Fragment() {
                                                 }
                                             }
                                         }
-                                        val extension = fileName?.substring(fileName.lastIndexOf(".") + 1)
+                                        val extension =
+                                            fileName?.substring(fileName.lastIndexOf(".") + 1)
 
-                                        val imageRef = storageRef.child("MedicalDocuments/$uid/${documentTitle.text!!.trim()}.$extension")
+                                        val imageRef =
+                                            storageRef.child("MedicalDocuments/$uid/${documentTitle.text!!.trim()}.$extension")
                                         val uploadTask = imageRef.putFile(selectedImageUri)
                                         uploadTask.addOnSuccessListener {
                                             imageRef.downloadUrl.addOnSuccessListener { uri ->
@@ -894,15 +919,21 @@ class HomeFragment : Fragment() {
                                                     Locale.getDefault()
                                                 )
 
-                                                val date = dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
+                                                val date =
+                                                    dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
 
                                                 val medicalRecord = mapOf(
                                                     "documentOwnId" to auth.currentUser!!.uid,
-                                                    "documentTitle" to documentTitle.text!!.trim().toString(),
-                                                    "documentShortDescription" to shortDescription.text!!.trim().toString(),
+                                                    "documentTitle" to documentTitle.text!!.trim()
+                                                        .toString(),
+                                                    "documentShortDescription" to shortDescription.text!!.trim()
+                                                        .toString(),
                                                     "documentDate" to date.toString(),
                                                     "documentSyncStatus" to "Synced",
-                                                    "documentNotes" to medicalNotes.text!!.trim().toString().replace(".", ".\n\n").replace("?", "?\n\n").replace("\n\n ", "\n\n"),
+                                                    "documentNotes" to medicalNotes.text!!.trim()
+                                                        .toString().replace(".", ".\n\n")
+                                                        .replace("?", "?\n\n")
+                                                        .replace("\n\n ", "\n\n"),
                                                     "documentPreview" to uri.toString()
                                                 )
                                                 db.getReference("MedicalDocuments")

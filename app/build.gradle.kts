@@ -34,7 +34,7 @@ android {
         //noinspection EditedTargetSdkVersion
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0.8"
+        versionName = "1.0.9"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -50,7 +50,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            isDebuggable = true
+            isDebuggable = false
             signingConfig = signingConfigs.getByName("release")
         }
         debug {
@@ -85,7 +85,7 @@ android {
             isEnable = true
             reset()
             include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-            isUniversalApk = true
+            isUniversalApk = false
         }
     }
     packagingOptions {
@@ -153,17 +153,4 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-}
-
-tasks.register("assembleRelease2") {
-    group = "assemble"
-    description = "Assembles a release build"
-
-    dependsOn("assemble")
-    doLast {
-        copy {
-            from("${project.buildDir}/outputs/apk/release/metospherus*")
-            into("${project.buildDir}/assets/")
-        }
-    }
 }

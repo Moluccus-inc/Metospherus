@@ -14,9 +14,12 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import metospherus.app.BuildConfig
+import metospherus.app.MainActivity
 import metospherus.app.R
+import metospherus.app.utilities.MoluccusToast
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -27,7 +30,8 @@ import java.net.URL
 
 class UpdateUtil(var context: Context) {
     private val tag = "UpdateUtil"
-    private val downloadManager: DownloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    private val downloadManager: DownloadManager =
+        context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
 
     fun updateApp(result: (result: String) -> Unit) {
         try {
@@ -48,8 +52,8 @@ class UpdateUtil(var context: Context) {
                 result(context.getString(R.string.network_error))
                 return
             }
-            val versionNameInt = version.split("v")[1].replace(".","").toInt()
-            val currentVersionNameInt = BuildConfig.VERSION_NAME.replace(".","").toInt()
+            val versionNameInt = version.split("v")[1].replace(".", "").toInt()
+            val currentVersionNameInt = BuildConfig.VERSION_NAME.replace(".", "").toInt()
             if (currentVersionNameInt >= versionNameInt) {
                 result(context.getString(R.string.you_are_in_latest_version))
                 return
@@ -71,7 +75,7 @@ class UpdateUtil(var context: Context) {
                 updateDialog.show()
             }
             return
-        }catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
             result(e.message.toString())
             return
@@ -128,7 +132,8 @@ class UpdateUtil(var context: Context) {
                 return
             }
             val uri = Uri.parse(url)
-            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val downloadsDir =
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             downloadsDir.mkdirs()
             val downloadRequest = DownloadManager.Request(uri)
                 .setAllowedNetworkTypes(
@@ -139,24 +144,25 @@ class UpdateUtil(var context: Context) {
                 .setTitle(context.getString(R.string.downloading_update))
                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, appName)
 
-            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val downloadManager =
+                context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
             val downloadId = downloadManager.enqueue(downloadRequest)
 
-            // Listen for download completion
             val onCompleteReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
                     if (intent?.action == DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
                         val downloadCompletedId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
                         if (downloadCompletedId == downloadId) {
-                            // Download completed, prompt user to install
                             val installIntent = Intent(Intent.ACTION_VIEW)
-                            val apkUri = Uri.fromFile(File(downloadsDir, appName))
+                            val apkUri = FileProvider.getUriForFile(context!!, context.applicationContext.packageName + ".provider", File(downloadsDir, appName))
                             installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive")
-                            installIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                            context?.startActivity(installIntent)
+                            installIntent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
+                            context.startActivity(installIntent)
+                            context.unregisterReceiver(this)
 
-                            // Unregister the BroadcastReceiver
-                            context?.unregisterReceiver(this)
+                            val restartIntent = Intent(context, MainActivity::class.java)
+                            restartIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            context.startActivity(restartIntent)
                         }
                     }
                 }
@@ -167,6 +173,7 @@ class UpdateUtil(var context: Context) {
             context.registerReceiver(onCompleteReceiver, filter)
         } catch (ignored: Exception) {
             // Handle exceptions
+            MoluccusToast(context).showError("Error exception ${ignored.message}")
         }
     }
 

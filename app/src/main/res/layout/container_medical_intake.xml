@@ -21,7 +21,7 @@
                 style="@style/Widget.Material3.CardView.Elevated"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp">
+                android:layout_margin="10dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -64,21 +64,11 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <CalendarView
-                style="@style/Widget.Material3.MaterialCalendar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fitsSystemWindows="true"
-                android:shownWeekCount="7"
-                android:selectedWeekBackgroundColor="?android:colorAccent"
-                android:showWeekNumber="true"
-                android:weekNumberColor="?android:colorAccent" />
-
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerViewBottomSheet"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:orientation="vertical"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 app:spanCount="5"
                 tools:listitem="@layout/medicine_intake_layout" />

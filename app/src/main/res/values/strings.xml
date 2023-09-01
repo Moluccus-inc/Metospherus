@@ -2,9 +2,7 @@
     <string name="app_name">Metospherus</string>
     <string name="action_settings">Settings</string>
 
-    <string name="searchbar_hint">
-        Search, Inquire, Learn, Ask...
-    </string>
+    <string name="searchbar_hint">Search, Inquire, Learn, Ask…</string>
 
     <string name="prefix">Per </string>
     <string name="suffix"> Pills</string>
@@ -22,10 +20,11 @@
     <string name="warning">Warning</string>
     <string name="request_permission_desc">This app needs this permission on your device</string>
     <string name="exit_app">exit</string>
-    <string name="ok">ok</string>
+    <string name="ok">OK</string>
     <string name="appwidget_text">EXAMPLE</string>
     <string name="configure">Configure</string>
     <string name="add_widget">Add widget</string>
 
     <string name="app_widget_description">This is an app widget description</string>
+    <string name="app_default_module_url">https://images.unsplash.com/photo-1584017911766-d451b3d0e843?ixlib=rb-4.0.3&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&amp;auto=format</string>
 </resources>

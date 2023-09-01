@@ -101,16 +101,20 @@
                         android:textSize="28sp"
                         android:textStyle="bold" />
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/recylerCatagories"
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_margin="5dp"
-                        android:background="@android:color/transparent"
-                        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-                        app:spanCount="4"
-                        tools:itemCount="5"
-                        tools:listitem="@layout/categories_layout" />
+                        android:layout_height="wrap_content"
+                        android:layout_margin="8dp">
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/recylerCatagories"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@android:color/transparent"
+                            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                            app:spanCount="4"
+                            tools:itemCount="5"
+                            tools:listitem="@layout/categories_layout" />
+                    </LinearLayout>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -120,11 +124,19 @@
                         android:textSize="28sp"
                         android:textStyle="bold" />
 
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/addRemoveAvailableModules"
+                        style="@style/Widget.MaterialComponents.Chip.Action"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="ADD REMOVE"/>
+
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/recyclerViewTrackers"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_margin="5dp"
+                        android:layout_margin="10dp"
                         android:background="@android:color/transparent"
                         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
                         app:spanCount="3"

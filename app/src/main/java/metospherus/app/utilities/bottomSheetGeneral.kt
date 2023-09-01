@@ -29,6 +29,7 @@ import com.afollestad.date.year
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
+import com.afollestad.materialdialogs.bottomsheets.setPeekHeight
 import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.datetime.datePicker
@@ -64,6 +65,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+@SuppressLint("SetTextI18n")
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(DelicateCoroutinesApi::class)
 fun bottomSheetGeneral(
@@ -83,8 +85,7 @@ fun bottomSheetGeneral(
         val titleBottomSheet = view.findViewById<TextView>(R.id.titleBottomSheet)
 
         // Layouts
-        val containerMedicalIntake =
-            view.findViewById<RelativeLayout>(R.id.container_medical_intake)
+        val containerMedicalIntake = view.findViewById<RelativeLayout>(R.id.container_medical_intake)
         val containerPeriodTracker = view.findViewById<LinearLayout>(R.id.container_period_tracker)
 
         // fab
@@ -97,9 +98,6 @@ fun bottomSheetGeneral(
 
         val auth: FirebaseAuth = Firebase.auth
         val db: FirebaseDatabase = FirebaseDatabase.getInstance()
-
-        var startDate: Date? = null
-        var endDate: Date? = null
 
         val medicineIntakeAdapter = MedicineIntakeAdaptor(context, auth, db)
         when (generalTemplate.name?.trim()?.lowercase(Locale.ROOT)) {
@@ -229,7 +227,7 @@ fun bottomSheetGeneral(
                 recyclerViewTracker.layoutManager =
                     LinearLayoutManager(
                         context,
-                        LinearLayoutManager.HORIZONTAL,
+                        LinearLayoutManager.VERTICAL,
                         false
                     )
                 recyclerViewTracker.isNestedScrollingEnabled = true
@@ -288,44 +286,49 @@ fun bottomSheetGeneral(
                 lifecycleScope.launch {
                     val userMenstrualCycles = getMenstrualCyclesFromLocalDatabase(appDatabase)
                     userMenstrualCycles?.let {
-                        val calendar = Calendar.getInstance()
-                        val currentDate = SimpleDateFormat("MMM dd, yyyy", Locale.US).format(Calendar.getInstance().time)
-                        val previousEndDate = SimpleDateFormat("MMM dd, yyyy", Locale.US).parse(it.previous_end_date)
+                        val currentDateMillis = Calendar.getInstance().timeInMillis
+                        val previousEndDateMillis = it.previous_end_date?.let { endDateStr ->
+                            val endDate = SimpleDateFormat("MMM dd, yyyy", Locale.US).parse(endDateStr)
+                            endDate?.time ?: 0
+                        } ?: currentDateMillis
+
                         val averageCycleLengthMillis = it.cycle_length!!.toInt() * 24 * 60 * 60 * 1000
-                        val nextPeriodStartDateMillis = previousEndDate!!.time + averageCycleLengthMillis
+                        val nextPeriodStartDateMillis = previousEndDateMillis + averageCycleLengthMillis
+
+                        //val currentDate = Calendar.getInstance()
+                        val nextPeriodStartDates = Calendar.getInstance()
+                        nextPeriodStartDates.timeInMillis = nextPeriodStartDateMillis
+
+                        val daysLeft = ((nextPeriodStartDateMillis - currentDateMillis) / (1000 * 60 * 60 * 24)).toInt()
 
                         avarageCycleView.text = it.cycle_length.toString()
-
-                        val nextPeriodStartDateFormatted = SimpleDateFormat("dd. MMM", Locale.US).format(nextPeriodStartDateMillis)
+                        val nextPeriodStartDateFormatted = SimpleDateFormat("dd. MMM", Locale.US).format(nextPeriodStartDates.time)
                         nextPeriodStartDate.text = nextPeriodStartDateFormatted
 
-                        val currentDateMillis = SimpleDateFormat("MMM dd, yyyy", Locale.US).parse(currentDate)?.time ?: 0
-                        val daysLeft = ((previousEndDate.time - currentDateMillis) / (1000 * 60 * 60 * 24)).toInt()
                         nextPeriodIn.text = "$daysLeft Days"
 
                         val nextFertileStartDateMillis = nextPeriodStartDateMillis - (averageCycleLengthMillis * 0.4).toLong()
-                        val nextFertileStartFormatted = SimpleDateFormat("dd. MMM", Locale.US).format(nextFertileStartDateMillis)
+                        val nextFertileStartFormatted =
+                            SimpleDateFormat("dd. MMM", Locale.US).format(nextFertileStartDateMillis)
                         nextFertilePhase.text = nextFertileStartFormatted
 
                         val safeLowFertilityStartMillis = nextFertileStartDateMillis - (averageCycleLengthMillis * 0.2).toLong()
                         val safeHighFertilityEndMillis = nextFertileStartDateMillis + (averageCycleLengthMillis * 0.2).toLong()
 
-                        val currentDateMillisTime = Calendar.getInstance().timeInMillis
                         val safetyLevel = when {
-                            currentDateMillisTime < safeLowFertilityStartMillis -> "Low"
-                            currentDateMillisTime <= safeHighFertilityEndMillis -> "Medium"
+                            currentDateMillis < safeLowFertilityStartMillis -> "Low"
+                            currentDateMillis <= safeHighFertilityEndMillis -> "Medium"
                             else -> "High"
                         }
                         chancesOfPregnancy.text = safetyLevel
 
-                        val cycleVariationMillis = (it.longest_cycle!!.toInt() - it.cycle_length.toInt()) * 24 * 60 * 60 * 1000
+                        val cycleVariationMillis =
+                            (it.longest_cycle!!.toInt() - it.cycle_length.toInt()) * 24 * 60 * 60 * 1000
                         val cycleVariationDays = (cycleVariationMillis / (1000 * 60 * 60 * 24))
                         cycleVariation.text = "$cycleVariationDays days"
 
                         periodLengthView.text = "${it.cycle_length} days"
                         longestCycleView.text = "${it.longest_cycle} days"
-
-
                     }
                 }
 
@@ -452,7 +455,7 @@ fun bottomSheetGeneral(
                             )
                             if (menstrualCycles != null) {
                                 lifecycleScope.launch {
-                                    Constructor.insertOrUpdateMenstrualCycles(
+                                    insertOrUpdateMenstrualCycles(
                                         menstrualCycles,
                                         appDatabase
                                     )

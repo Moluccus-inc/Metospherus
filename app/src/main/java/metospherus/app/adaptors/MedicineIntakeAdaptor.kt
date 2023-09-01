@@ -53,13 +53,11 @@ class MedicineIntakeAdaptor(
 
             when {
                 generalPill.medicineAmount!!.contains("1") -> {
-                    itemView.findViewById<Chip>(R.id.medicinePrescrition).text =
-                        "${generalPill.medicineAmount} pill"
+                    itemView.findViewById<Chip>(R.id.medicinePrescrition).text = "${generalPill.medicineAmount} pill"
                 }
 
                 else -> {
-                    itemView.findViewById<Chip>(R.id.medicinePrescrition).text =
-                        "${generalPill.medicineAmount} pills"
+                    itemView.findViewById<Chip>(R.id.medicinePrescrition).text = "${generalPill.medicineAmount} pills"
                 }
             }
 

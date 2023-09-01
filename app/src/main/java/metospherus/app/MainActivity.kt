@@ -25,7 +25,6 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,6 +33,7 @@ import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.database.profile_data.Profiles
 import metospherus.app.databinding.ActivityMainBinding
 import metospherus.app.modules.GeneralReminders
+import metospherus.app.modules.GeneralTemplate
 import metospherus.app.services.ScheduledRemindersManager
 import metospherus.app.update.UpdateUtil
 import metospherus.app.utilities.MoluccusToast
@@ -65,21 +65,44 @@ class MainActivity : AppCompatActivity() {
         preferences = PreferenceManager.getDefaultSharedPreferences(this)
         navController = findNavController(R.id.nav_host_fragment_content_main)
         appBarConfiguration = AppBarConfiguration(navController.graph)
+
+        checkUpdate()
     }
 
     override fun onResume() {
         super.onResume()
         initializeMedicalIntakeAlertSystem()
-        val userId = auth.currentUser?.uid
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (task.isSuccessful && !userId.isNullOrEmpty()) {
-                val userFCMToken = task.result
-                db.getReference("participants").child(userId).child("fcmToken").setValue(userFCMToken)
-            }
-        }
-
-        checkUpdate()
         getProfileDatilsIfExists()
+        publicModulesForAllUsers()
+    }
+
+    private fun publicModulesForAllUsers() {
+        auth.currentUser?.let { currentUser ->
+            val patientGeneralModulesDB = db.getReference("medicalmodules").child("modules")
+            val patientPrivateGeneralModulesDB = db.getReference("medicalmodules").child("userspecific").child("modules").child(currentUser.uid)
+
+            patientGeneralModulesDB.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    for (dataSnapshot in snapshot.children) {
+                        val key = dataSnapshot.key
+                        if (key != null) {
+                            patientPrivateGeneralModulesDB.child(key).addListenerForSingleValueEvent(object : ValueEventListener {
+                                override fun onDataChange(dataSnapshotPrivate: DataSnapshot) {
+                                    if (!dataSnapshotPrivate.exists()) {
+                                        val modulesData = dataSnapshot.getValue(GeneralTemplate::class.java)
+                                        patientPrivateGeneralModulesDB.child(key).setValue(modulesData)
+                                    }
+                                }
+
+                                override fun onCancelled(error: DatabaseError) {}
+                            })
+                        }
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
+        }
     }
 
     private fun getProfileDatilsIfExists() {
@@ -108,6 +131,7 @@ class MainActivity : AppCompatActivity() {
             appDatabase.profileLocal().insertOrUpdateUserPatient(userProfile)
         }
     }
+
     private fun initializeMedicalIntakeAlertSystem() {
         auth.currentUser?.let { currentUser ->
             val schedulingReferences = db.getReference("medicalmodules")
@@ -119,16 +143,21 @@ class MainActivity : AppCompatActivity() {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val scheduledReminders = mutableListOf<GeneralReminders>()
                     for (snapshotSchedule in snapshot.children) {
-                        val schTime = snapshotSchedule.child("medicineTime").getValue(String::class.java)
-                        val schDate = snapshotSchedule.child("medicineDate").getValue(String::class.java)
-                        val schTitle = snapshotSchedule.child("medicineName").getValue(String::class.java)
+                        val schTime =
+                            snapshotSchedule.child("medicineTime").getValue(String::class.java)
+                        val schDate =
+                            snapshotSchedule.child("medicineDate").getValue(String::class.java)
+                        val schTitle =
+                            snapshotSchedule.child("medicineName").getValue(String::class.java)
 
                         if (!schTime.isNullOrEmpty() && !schDate.isNullOrEmpty() && !schTitle.isNullOrEmpty()) {
                             val scheduledList = GeneralReminders(schTime, schDate, schTitle)
                             scheduledReminders.add(scheduledList)
                         }
                     }
-                    ScheduledRemindersManager(this@MainActivity).scheduleNotifications(scheduledReminders)
+                    ScheduledRemindersManager(this@MainActivity).scheduleNotifications(
+                        scheduledReminders
+                    )
                 }
 
                 override fun onCancelled(error: DatabaseError) {
@@ -138,6 +167,7 @@ class MainActivity : AppCompatActivity() {
             schedulingReferences.addValueEventListener(valueEventListener)
         }
     }
+
     @SuppressLint("InlinedApi")
     override fun onStart() {
         super.onStart()
@@ -151,7 +181,10 @@ class MainActivity : AppCompatActivity() {
                     Manifest.permission.INTERNET,
                     Manifest.permission.POST_NOTIFICATIONS,
                     Manifest.permission.WAKE_LOCK,
-                    Manifest.permission.VIBRATE
+                    Manifest.permission.VIBRATE,
+                    Manifest.permission.INSTALL_PACKAGES,
+                    Manifest.permission.REQUEST_INSTALL_PACKAGES,
+                    Manifest.permission.MANAGE_DEVICE_POLICY_INSTALL_UNKNOWN_SOURCES
                 ).toString()
             ) != PackageManager.PERMISSION_GRANTED -> {
                 requestPermissions(
@@ -162,7 +195,10 @@ class MainActivity : AppCompatActivity() {
                         Manifest.permission.INTERNET,
                         Manifest.permission.POST_NOTIFICATIONS,
                         Manifest.permission.WAKE_LOCK,
-                        Manifest.permission.VIBRATE
+                        Manifest.permission.VIBRATE,
+                        Manifest.permission.INSTALL_PACKAGES,
+                        Manifest.permission.REQUEST_INSTALL_PACKAGES,
+                        Manifest.permission.MANAGE_DEVICE_POLICY_INSTALL_UNKNOWN_SOURCES
                     ),
                     PERMISSIONS_REQUEST_CODE
                 )

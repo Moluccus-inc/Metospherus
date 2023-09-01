@@ -66,16 +66,10 @@ jobs:
           body: |
             # Metospherus A Comprehensive Medical System
             **What's New** 
-            > We included a number of updates including the list below
-            - Scheduled alerts for Medical Intake 
-            - These alerts will also be used for other cases like
-            - Language module for searching queries and questioning or consultation -- more work still being done on it 
-            - Update system updated
-            **What next** 
-            - Workout module
-            - Doctors listing by Categories 
-            - Patient Public Statistics and different areas of interest for research, investors, and just someone interested in the medical sector
-            - Improvement on Document - scan - upload - input - etc
-            - Security of personal information with fingerprint authentication for access 
+            - We included a number of updates
+            - Modules , documents , preview, documentation , profile etc
+            - Language model fixing bugs 
+            - Developing as you use 
+
             # Developers
             @la-niina by @Moluccus-inc/moluccus Founder and soul developer

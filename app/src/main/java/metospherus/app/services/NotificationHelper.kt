@@ -44,7 +44,7 @@ class NotificationHelper(private val context: Context) {
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
-            .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
+            .setSound(alarmSound)
             .setVibrate(longArrayOf(1000, 1000, 1000, 1000, 1000))
             .build()
 
