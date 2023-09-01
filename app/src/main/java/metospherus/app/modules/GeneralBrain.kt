@@ -57,7 +57,7 @@ object GeneralBrain {
         messageContent: String
     ): MessagePrompt {
         val palmMessage = Message.newBuilder()
-            .setAuthor("Metospherus - Comprehensive Medical System")
+            .setAuthor("Metospherus")
             .setContent(messageContent)
             .build()
 
