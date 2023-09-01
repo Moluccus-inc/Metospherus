@@ -34,7 +34,7 @@ android {
         //noinspection EditedTargetSdkVersion
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0.9"
+        versionName = "1.1.0"
 
         vectorDrawables {
             useSupportLibrary = true
