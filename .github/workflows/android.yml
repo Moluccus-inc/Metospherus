@@ -52,7 +52,6 @@ jobs:
           mv app/build/outputs/apk/release/metospherus-armeabi-v7a-release.apk app/build/outputs/apk/release/metospherus-armeabi-v7a.apk
           mv app/build/outputs/apk/release/metospherus-x86-release.apk app/build/outputs/apk/release/metospherus-x86.apk
           mv app/build/outputs/apk/release/metospherus-x86_64-release.apk app/build/outputs/apk/release/metospherus-x86_64.apk
-          mv app/build/outputs/apk/release/metospherus-universal-release.apk app/build/outputs/apk/release/metospherus-universal.apk
 
       - name: Create Draft Release
         id: create_draft_release
