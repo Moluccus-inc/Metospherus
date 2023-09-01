@@ -6,6 +6,30 @@
 
 > Welcome to Metospherus, a groundbreaking Comprehensive Medical System that redefines healthcare by integrating all aspects of the medical sector, from patients and doctors to nurses, pharmacies, shipping, communication, intensive care, donations, and more. Metospherus is designed to provide a holistic approach to healthcare, putting the power of the entire medical ecosystem at your fingertips.
 
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <img src="images/moluccus-header.png" alt="Image 1" style="width:100%;">
+    <img src="images/metospherus (1).png" alt="Image 2">
+    <img src="images/metospherus (2).png" alt="Image 3">
+    <img src="images/metospherus (3).png" alt="Image 4">
+    <img src="images/metospherus (4).png" alt="Image 5">
+    <img src="images/metospherus (5).png" alt="Image 6">
+    <img src="images/metospherus (6).png" alt="Image 7">
+    <img src="images/metospherus (7).png" alt="Image 8">
+    <img src="images/metospherus (8).png" alt="Image 9">
+    <img src="images/metospherus (9).png" alt="Image 10">
+</body>
+</html>
+
 ## Disclaimer
 - ⚠️ The project is under very active development.
 - ⚠️ Expect bugs and breaking changes.
