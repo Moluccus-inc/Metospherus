@@ -66,7 +66,8 @@ jobs:
             # Metospherus A Comprehensive Medical System
             **What's New** 
             - We included a number of updates
-            - Modules , documents , preview, documentation , profile etc
+            - Modules , documents , preview
+            - documentation , profile etc
             - Language model fixing bugs 
             - Developing as you use 
 
