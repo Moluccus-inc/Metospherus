@@ -16,6 +16,9 @@
         <action
             android:id="@+id/action_to_profile"
             app:destination="@id/ProfileFragment" />
+        <action
+            android:id="@+id/action_medical_profile"
+            app:destination="@id/medicalProfileFragment" />
     </fragment>
 
     <fragment
@@ -36,6 +39,16 @@
         tools:layout="@layout/fragment_profile" >
         <action
             android:id="@+id/action_home"
+            app:destination="@id/HomeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/medicalProfileFragment"
+        android:name="metospherus.app.fragments.MedicalProfileFragment"
+        android:label="Medical Profession Profile"
+        tools:layout="@layout/fragment_medical_profile" >
+        <action
+            android:id="@+id/action_home_from_mdprofile"
             app:destination="@id/HomeFragment" />
     </fragment>
 </navigation>

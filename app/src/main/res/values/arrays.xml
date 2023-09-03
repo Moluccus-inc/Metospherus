@@ -40,4 +40,67 @@
         <item>Burundi</item>
         <item>South Africa</item>
     </string-array>
+
+    <string-array name="medical_professionals">
+        <item>General Doctor</item>
+        <item>Nurse</item>
+        <item>Psychologist</item>
+        <item>Surgeon</item>
+        <item>Pharmacist</item>
+        <item>Dentist</item>
+        <item>Orthopedic Surgeon</item>
+        <item>Pediatrician</item>
+        <item>Obstetrician/Gynecologist</item>
+        <item>Cardiologist</item>
+        <item>Gastroenterologist</item>
+        <item>Neurologist</item>
+        <item>Oncologist</item>
+        <item>Optometrist</item>
+        <item>Physical Therapist</item>
+        <item>Radiologist</item>
+        <item>Anesthesiologist</item>
+        <item>Emergency Medical Technician (EMT)</item>
+        <item>Chiropractor</item>
+        <item>Occupational Therapist</item>
+        <item>Speech Therapist</item>
+        <item>Phlebotomist</item>
+        <item>Pathologist</item>
+        <item>Podiatrist</item>
+        <item>Urologist</item>
+        <item>Ophthalmologist</item>
+        <item>Allergist/Immunologist</item>
+    </string-array>
+
+    <string-array name="biological_sex_list" translatable="true">
+        <item>Male</item>
+        <item>Female</item>
+        <item>Hermaphrodite</item>
+        <item>Intersex</item>
+        <item>Male (XXY)</item>
+        <item>Female (XXY)</item>
+        <item>Male (XYY)</item>
+        <item>Female (XX)</item>
+        <item>Male (XY)</item>
+    </string-array>
+
+    <string-array name="gender_identity_list" translatable="true">
+        <item>Male</item>
+        <item>Female</item>
+        <item>Transgender Male</item>
+        <item>Transgender Female</item>
+        <item>Non-binary</item>
+        <item>Genderqueer</item>
+        <item>Agender</item>
+        <item>Bigender</item>
+        <item>Two-Spirit</item>
+        <item>Genderfluid</item>
+        <item>Androgynous</item>
+        <item>Demigirl</item>
+        <item>Demiboy</item>
+        <item>Neutrois</item>
+        <item>Pangender</item>
+        <item>Third Gender</item>
+        <item>Questioning</item>
+        <item>Other</item>
+    </string-array>
 </resources>

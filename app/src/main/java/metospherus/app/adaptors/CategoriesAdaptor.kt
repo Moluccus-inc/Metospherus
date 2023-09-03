@@ -9,12 +9,18 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import metospherus.app.R
+import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.modules.GeneralCategory
+import metospherus.app.utilities.Constructor
 import metospherus.app.utilities.InitializeBottomSheetCategories
 
 class CategoriesAdaptor(
     private val context: Context,
+    private val appDatabase: AppDatabase,
 ) : RecyclerView.Adapter<CategoriesAdaptor.ViewHolder>() {
     private val serviceList: MutableList<GeneralCategory> = mutableListOf()
 
@@ -34,10 +40,15 @@ class CategoriesAdaptor(
                 .into(itemView.findViewById(R.id.imageCategory))
 
             itemView.findViewById<MaterialCardView>(R.id.containerHolders).setOnClickListener {
-                InitializeBottomSheetCategories().initializeBottomSheetCategories(
-                    context,
-                    cart
-                )
+                CoroutineScope(Dispatchers.Main).launch {
+                    val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
+                    if (userPatient != null) {
+                        InitializeBottomSheetCategories().initializeBottomSheetCategories(
+                            context,
+                            cart
+                        )
+                    }
+                }
             }
         }
     }

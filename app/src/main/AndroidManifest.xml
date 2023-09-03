@@ -29,9 +29,10 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:banner="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Metospherus"
         tools:targetApi="tiramisu">
@@ -60,29 +61,15 @@
             android:allowTaskReparenting="true"
             android:alwaysRetainTaskState="true"
             android:exported="true"
+            android:launchMode="singleTask"
             android:hardwareAccelerated="true"
             android:resizeableActivity="true"
+            android:configChanges="uiMode"
             android:theme="@style/Theme.Metospherus"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <activity android:name=".DeepLinkActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="https"
-                    android:host="metospherus.app"
-                    android:pathPrefix="/docs" />
-                <data android:host="metospherus.app"/>
-                <data android:pathPrefix="/docs"/>
             </intent-filter>
         </activity>
 

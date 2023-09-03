@@ -71,15 +71,14 @@ import `in`.aabhasjindal.otptextview.OtpTextView
 import koleton.api.hideSkeleton
 import koleton.api.loadSkeleton
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import metospherus.app.R
 import metospherus.app.adaptors.CategoriesAdaptor
 import metospherus.app.adaptors.MainAdaptor
 import metospherus.app.adaptors.SearchAdaptor
 import metospherus.app.database.localhost.AppDatabase
+import metospherus.app.database.profile_data.Profiles
 import metospherus.app.databinding.FragmentHomeBinding
 import metospherus.app.modules.GeneralBrain.sendMessage
 import metospherus.app.modules.GeneralCategory
@@ -93,7 +92,6 @@ import metospherus.app.utilities.MoluccusToast
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -114,8 +112,7 @@ class HomeFragment : Fragment() {
     private lateinit var storedVerificationId: String
 
     private val selectedImageLiveData = MutableLiveData<Uri>()
-    private val imguriholder =
-        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uris ->
+    private val imguriholder = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uris ->
             if (uris != null) {
                 selectedImageLiveData.value = uris
             } else {
@@ -146,7 +143,7 @@ class HomeFragment : Fragment() {
         recyclerViewTracker.layoutManager = GridLayoutManager(requireContext(), 3)
 
         mainAdapter = MainAdaptor(requireContext(), lifecycleScope)
-        categoryAdapter = CategoriesAdaptor(requireContext())
+        categoryAdapter = CategoriesAdaptor(requireContext(), appDatabase)
 
         initializeTracker()
         initializeCatagories()
@@ -159,14 +156,26 @@ class HomeFragment : Fragment() {
             AddOrRemoveModules().addOrRemoveModules(requireContext(), db, auth)
         }
 
+        var isDataLoading = false
         binding.profileHolder.setOnClickListener {
+            if (isDataLoading) {
+                return@setOnClickListener
+            }
             if (auth.currentUser != null) {
-                initProfileSheetIfNeeded()
+                isDataLoading = true
+                CoroutineScope(Dispatchers.Main).launch {
+                    val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
+                    if (userPatient != null) {
+                        initProfileSheetIfNeeded(userPatient)
+                    } else {
+                        getPermissionsTaskDB()
+                    }
+                    isDataLoading = false
+                }
             } else {
                 initBottomSheetsIfNeeded()
             }
         }
-
         CoroutineScope(Dispatchers.Main).launch {
             val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
             if (userPatient != null) {
@@ -177,6 +186,7 @@ class HomeFragment : Fragment() {
             }
         }
         setupMaterialSearchView()
+        getPermissionsTaskDB()
     }
 
     private fun setupMaterialSearchView() {
@@ -260,11 +270,6 @@ class HomeFragment : Fragment() {
             }
         }
 
-    }
-
-    override fun onResume() {
-        super.onResume()
-        getPermissionsTaskDB()
     }
 
     private fun getPermissionsTaskDB() {
@@ -352,45 +357,30 @@ class HomeFragment : Fragment() {
             }
 
 
-            userHandle.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                override fun afterTextChanged(editable: Editable?) {
-                    val input = editable.toString()
+            userHandle.doAfterTextChanged { editable ->
+                val input = editable.toString()
 
-                    val validInput = input.replace(" ", "_") // Replace spaces with underscores
-                        .replace(".", "_") // Replace dots with underscores
-                        .replace(Regex("[^a-zA-Z0-9_]"), "")
-                        .lowercase(Locale.ROOT)// Remove all characters except letters, digits, and underscore
+                val validInput = input.replace(" ", "_") // Replace spaces with underscores
+                    .replace(".", "_") // Replace dots with underscores
+                    .replace(Regex("[^a-zA-Z0-9_]"), "")
+                    .lowercase(Locale.ROOT)// Remove all characters except letters, digits, and underscore
 
-                    // Update the EditText with the valid input
-                    if (input != validInput) {
-                        editable?.replace(0, editable.length, validInput)
-                    }
+                // Update the EditText with the valid input
+                if (input != validInput) {
+                    editable?.replace(0, editable.length, validInput)
                 }
-            })
+            }
 
-            usersEmail.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                    // Not needed for your implementation
+            usersEmail.doAfterTextChanged {
+                val input = it.toString()
+                if (isValidEmail(input)) {
+                    // Email is valid, remove any previous error message if shown
+                    usersEmailLayout.error = null
+                } else {
+                    // Show an error message to the user indicating that the email format is incorrect
+                    usersEmailLayout.error = "Invalid email format"
                 }
-
-                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                    // Not needed for your implementation
-                }
-
-                override fun afterTextChanged(editable: Editable?) {
-                    val input = editable.toString()
-
-                    if (isValidEmail(input)) {
-                        // Email is valid, remove any previous error message if shown
-                        usersEmailLayout.error = null
-                    } else {
-                        // Show an error message to the user indicating that the email format is incorrect
-                        usersEmailLayout.error = "Invalid email format"
-                    }
-                }
-            })
+            }
 
             positiveButton(text = "Complete") {
                 val selectedAccountType = accountType.text.toString().trim()
@@ -505,54 +495,62 @@ class HomeFragment : Fragment() {
         mainAdapter.setData(notLoggedIn)
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
-    private fun initProfileSheetIfNeeded() {
-        GlobalScope.launch(Dispatchers.Main) {
-            MaterialDialog(requireContext()).show {
-                customView(R.layout.profiletools_layout)
-                cornerRadius(20f)
-                cancelOnTouchOutside(false)
+    private fun initProfileSheetIfNeeded(userPatient: Profiles) {
+        MaterialDialog(requireContext()).show {
+            customView(R.layout.profiletools_layout)
+            cornerRadius(20f)
+            cancelOnTouchOutside(false)
 
-                val profileActionLayout =
-                    view.findViewById<MaterialCardView>(R.id.profileActionLayout)
-                val closeHolder = view.findViewById<ImageView>(R.id.closeHolder)
-                val profileImage = view.findViewById<ImageView>(R.id.profileImage)
+            val profileActionLayout = view.findViewById<MaterialCardView>(R.id.profileActionLayout)
+            val shareInformation = view.findViewById<MaterialCardView>(R.id.shareInformation)
+            val closeHolder = view.findViewById<ImageView>(R.id.closeHolder)
+            val profileImage = view.findViewById<ImageView>(R.id.profileImage)
 
-                val prefName = view.findViewById<TextView>(R.id.prefName)
-                val profileType = view.findViewById<TextView>(R.id.profileType)
-                val profileHandler = view.findViewById<TextView>(R.id.profileHandler)
+            val prefName = view.findViewById<TextView>(R.id.prefName)
+            val profileType = view.findViewById<TextView>(R.id.profileType)
+            val profileHandler = view.findViewById<TextView>(R.id.profileHandler)
 
-                profileActionLayout.setOnClickListener {
-                    findNavController().navigate(R.id.action_to_profile)
-                    dismiss()
-                }
+            prefName.text = userPatient.name
+            profileType.text = userPatient.accountType
+            profileHandler.text = userPatient.handle
 
-                closeHolder.setOnClickListener {
-                    dismiss()
-                }
+            Glide.with(requireContext())
+                .load(userPatient.avatar)
+                .placeholder(R.drawable.holder)
+                .into(profileImage)
 
-                onShow {
-                    val displayMetrics = windowContext.resources.displayMetrics
-                    val dialogWidth =
-                        displayMetrics.widthPixels - (2 * windowContext.resources.getDimensionPixelSize(
-                            R.dimen.dialog_margin_horizontal
-                        ))
-                    window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
+            profileActionLayout.setOnClickListener {
+                when (userPatient.accountType?.lowercase(Locale.ROOT)) {
+                    "patient" -> {
+                        findNavController().navigate(R.id.action_to_profile)
+                        dismiss()
+                    }
 
-                    CoroutineScope(Dispatchers.Main).launch {
-                        val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
-                        if (userPatient != null) {
-                            prefName.text = userPatient.name
-                            profileType.text = userPatient.accountType
-                            profileHandler.text = userPatient.handle
+                    "doctor", "nurse" -> {
+                        findNavController().navigate(R.id.action_medical_profile)
+                        dismiss()
+                    }
 
-                            Glide.with(requireContext())
-                                .load(userPatient.avatar)
-                                .placeholder(R.drawable.holder)
-                                .into(profileImage)
-                        }
+                    else -> {
+                        MoluccusToast(context).showInformation("Your Account Type is under development!!")
                     }
                 }
+            }
+
+            shareInformation.setOnClickListener {
+
+            }
+
+            closeHolder.setOnClickListener {
+                dismiss()
+            }
+            onShow {
+                val displayMetrics = windowContext.resources.displayMetrics
+                val dialogWidth =
+                    displayMetrics.widthPixels - (2 * windowContext.resources.getDimensionPixelSize(
+                        R.dimen.dialog_margin_horizontal
+                    ))
+                window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
             }
         }
     }

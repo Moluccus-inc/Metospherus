@@ -36,6 +36,7 @@ import metospherus.app.modules.GeneralReminders
 import metospherus.app.modules.GeneralTemplate
 import metospherus.app.services.ScheduledRemindersManager
 import metospherus.app.update.UpdateUtil
+import metospherus.app.utilities.Constructor
 import metospherus.app.utilities.MoluccusToast
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -76,26 +77,37 @@ class MainActivity : AppCompatActivity() {
         publicModulesForAllUsers()
     }
 
+    override fun onPause() {
+        super.onPause()
+        initializeMedicalIntakeAlertSystem()
+        getProfileDatilsIfExists()
+        publicModulesForAllUsers()
+    }
     private fun publicModulesForAllUsers() {
         auth.currentUser?.let { currentUser ->
             val patientGeneralModulesDB = db.getReference("medicalmodules").child("modules")
-            val patientPrivateGeneralModulesDB = db.getReference("medicalmodules").child("userspecific").child("modules").child(currentUser.uid)
+            val patientPrivateGeneralModulesDB =
+                db.getReference("medicalmodules").child("userspecific").child("modules")
+                    .child(currentUser.uid)
 
             patientGeneralModulesDB.addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     for (dataSnapshot in snapshot.children) {
                         val key = dataSnapshot.key
                         if (key != null) {
-                            patientPrivateGeneralModulesDB.child(key).addListenerForSingleValueEvent(object : ValueEventListener {
-                                override fun onDataChange(dataSnapshotPrivate: DataSnapshot) {
-                                    if (!dataSnapshotPrivate.exists()) {
-                                        val modulesData = dataSnapshot.getValue(GeneralTemplate::class.java)
-                                        patientPrivateGeneralModulesDB.child(key).setValue(modulesData)
+                            patientPrivateGeneralModulesDB.child(key)
+                                .addListenerForSingleValueEvent(object : ValueEventListener {
+                                    override fun onDataChange(dataSnapshotPrivate: DataSnapshot) {
+                                        if (!dataSnapshotPrivate.exists()) {
+                                            val modulesData =
+                                                dataSnapshot.getValue(GeneralTemplate::class.java)
+                                            patientPrivateGeneralModulesDB.child(key)
+                                                .setValue(modulesData)
+                                        }
                                     }
-                                }
 
-                                override fun onCancelled(error: DatabaseError) {}
-                            })
+                                    override fun onCancelled(error: DatabaseError) {}
+                                })
                         }
                     }
                 }
@@ -104,7 +116,6 @@ class MainActivity : AppCompatActivity() {
             })
         }
     }
-
     private fun getProfileDatilsIfExists() {
         auth.currentUser?.uid?.let { userId ->
             val profileDetails = db.getReference("participants").child(userId)
@@ -125,13 +136,11 @@ class MainActivity : AppCompatActivity() {
             })
         }
     }
-
     suspend fun insertOrUpdateUserProfile(userProfile: Profiles) {
         withContext(Dispatchers.IO) {
             appDatabase.profileLocal().insertOrUpdateUserPatient(userProfile)
         }
     }
-
     private fun initializeMedicalIntakeAlertSystem() {
         auth.currentUser?.let { currentUser ->
             val schedulingReferences = db.getReference("medicalmodules")
@@ -143,12 +152,9 @@ class MainActivity : AppCompatActivity() {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val scheduledReminders = mutableListOf<GeneralReminders>()
                     for (snapshotSchedule in snapshot.children) {
-                        val schTime =
-                            snapshotSchedule.child("medicineTime").getValue(String::class.java)
-                        val schDate =
-                            snapshotSchedule.child("medicineDate").getValue(String::class.java)
-                        val schTitle =
-                            snapshotSchedule.child("medicineName").getValue(String::class.java)
+                        val schTime = snapshotSchedule.child("medicineTime").getValue(String::class.java)
+                        val schDate = snapshotSchedule.child("medicineDate").getValue(String::class.java)
+                        val schTitle = snapshotSchedule.child("medicineName").getValue(String::class.java)
 
                         if (!schTime.isNullOrEmpty() && !schDate.isNullOrEmpty() && !schTitle.isNullOrEmpty()) {
                             val scheduledList = GeneralReminders(schTime, schDate, schTitle)
@@ -167,7 +173,6 @@ class MainActivity : AppCompatActivity() {
             schedulingReferences.addValueEventListener(valueEventListener)
         }
     }
-
     @SuppressLint("InlinedApi")
     override fun onStart() {
         super.onStart()
@@ -206,7 +211,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
     override fun onStop() {
         super.onStop()
         when {

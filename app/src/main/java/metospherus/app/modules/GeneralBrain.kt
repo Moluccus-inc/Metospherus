@@ -3,6 +3,7 @@ package metospherus.app.modules
 import android.content.Context
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.RecyclerView
+import com.facebook.shimmer.Shimmer
 import com.google.ai.generativelanguage.v1beta2.DiscussServiceClient
 import com.google.ai.generativelanguage.v1beta2.DiscussServiceSettings
 import com.google.ai.generativelanguage.v1beta2.Example
@@ -14,6 +15,7 @@ import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider
 import com.google.api.gax.rpc.FixedHeaderProvider
 import com.hbb20.countrypicker.logger.methodStartTimeMap
 import koleton.api.hideSkeleton
+import koleton.api.loadSkeleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -57,7 +59,7 @@ object GeneralBrain {
         messageContent: String
     ): MessagePrompt {
         val palmMessage = Message.newBuilder()
-            .setAuthor("Metospherus")
+            .setAuthor("Trevus")
             .setContent(messageContent)
             .build()
 
@@ -105,6 +107,12 @@ object GeneralBrain {
         val discussServiceClient = initializeDiscussServiceClient(appVer)
         val messageContent = discussServiceClient.generateMessage(request).candidatesList.lastOrNull()
 
+        searchRecyclerView.loadSkeleton {
+            val customShimmer = Shimmer.AlphaHighlightBuilder()
+                .setDirection(Shimmer.Direction.TOP_TO_BOTTOM)
+                .build()
+            shimmer(customShimmer)
+        }
         CoroutineScope(Dispatchers.Main).launch {
             if (messageContent != null) {
                 val words = messageContent.content.split("\\s+".toRegex())

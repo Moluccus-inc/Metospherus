@@ -2,6 +2,7 @@ package metospherus.app.database.localhost
 
 import androidx.room.TypeConverter
 import com.google.gson.Gson
+import metospherus.app.database.profile_data.Profiles
 
 class AvatarTypeConverter {
     private val gson = Gson()
@@ -15,18 +16,15 @@ class AvatarTypeConverter {
     fun toAvatar(avatarString: String?): Any? {
         return avatarString
     }
-   /** @TypeConverter
-    fun fromPatientDetails(patientDetails: PatientDetails?): String? {
-        return gson.toJson(patientDetails)
+
+    @TypeConverter
+    fun fromMedicalProfessionals(value: Profiles.MedicalProfessionals): String {
+        return gson.toJson(value)
     }
 
     @TypeConverter
-    fun toPatientDetails(patientDetailsString: String?): PatientDetails? {
-        if (patientDetailsString.isNullOrEmpty()) {
-            return null
-        }
-        val type = object : TypeToken<PatientDetails>() {}.type
-        return gson.fromJson(patientDetailsString, type)
-    } **/
+    fun toMedicalProfessionals(value: String): Profiles.MedicalProfessionals {
+        return gson.fromJson(value, Profiles.MedicalProfessionals::class.java)
+    }
 }
 

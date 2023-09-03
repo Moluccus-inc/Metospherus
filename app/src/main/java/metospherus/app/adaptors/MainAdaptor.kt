@@ -14,7 +14,8 @@ import metospherus.app.R
 import metospherus.app.modules.GeneralTemplate
 import metospherus.app.utilities.bottomSheetGeneral
 
-class MainAdaptor(private val context: Context, private val lifecycleScope: LifecycleCoroutineScope) : RecyclerView.Adapter<MainAdaptor.ViewHolder>() {
+class MainAdaptor(private val context: Context, private val lifecycleScope: LifecycleCoroutineScope)
+    : RecyclerView.Adapter<MainAdaptor.ViewHolder>() {
     private val serviceList: MutableList<GeneralTemplate> = mutableListOf()
 
     @SuppressLint("NotifyDataSetChanged")
@@ -35,8 +36,6 @@ class MainAdaptor(private val context: Context, private val lifecycleScope: Life
                 .load(generalTemplate.img)
                 .centerCrop()
                 .into(itemView.findViewById(R.id.templateImageView))
-
-
         }
     }
 

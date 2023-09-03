@@ -26,7 +26,29 @@ data class Profiles(
     val blood_group: String? = null,
     val height: String? = null,
     val weight: String? = null,
+    val medicalProfessionals: MedicalProfessionals,
 ) {
+
+    data class MedicalProfessionals(
+        val about: String? = null,
+        val medicalProfessionType: String? = null,
+        val mdGender: String? = null,
+        val mdExperience: String? = null,
+        val mdLicense: String? = null,
+        val mdReference: String? = null,
+        val mdReferenceEmail: String? = null,
+    ) {
+        constructor() : this(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        )
+    }
+
     constructor() : this(
         0,
         null,
@@ -46,6 +68,15 @@ data class Profiles(
         null,
         null,
         null,
-        null
+        null,
+        MedicalProfessionals(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        )
     )
 }
