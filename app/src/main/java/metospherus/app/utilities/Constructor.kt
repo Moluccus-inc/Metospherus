@@ -8,9 +8,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.database.profile_data.Profiles
+import metospherus.app.modules.GeneralBrainResponse
 import metospherus.app.modules.GeneralMenstrualCycle
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
+import kotlin.random.Random
 
 object Constructor {
     const val EXTRA_NOTIFICATION_ACTION = "extra_notification_action"
@@ -52,6 +55,32 @@ object Constructor {
         withContext(Dispatchers.IO) {
             appDatabase.menstrualCycleLocal().insertOrUpdateMenstrualCycles(menstrual)
         }
+    }
+    suspend fun insertOrUpdateUserCompanionShip(userCompanionship: GeneralBrainResponse, appDatabase: AppDatabase) {
+        withContext(Dispatchers.IO) {
+            appDatabase.generalBrainResponse().insertOrUpdateUserCompanionShip(userCompanionship)
+        }
+    }
+    suspend fun getCompanionShipFromLocalDatabase(appDatabase: AppDatabase): GeneralBrainResponse? {
+        return appDatabase.generalBrainResponse().getUserCompanionShip()
+    }
+    fun generateRandomIdWithDateTime(): String {
+        val currentTimeMillis = System.currentTimeMillis()
+        val random = Random.nextLong()
+        val combinedId = currentTimeMillis + random
+        val sdf = SimpleDateFormat("dd MMM, yyyy - hh:mm a", Locale.ENGLISH)
+        return sdf.format(Date(combinedId))
+    }
+
+    fun parseTimestampFromString(dateTimeString: String): Long? {
+        try {
+            val timestampString = dateTimeString.split(" - ")[0] // Extract the timestamp part
+            return timestampString.toLong()
+        } catch (e: NumberFormatException) {
+            // Handle the case where parsing fails
+            e.printStackTrace()
+        }
+        return null
     }
 
     fun convertTimeToMilliseconds(time: String): Long {

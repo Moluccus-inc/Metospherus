@@ -31,6 +31,10 @@
 
     <include
         android:id="@+id/container_period_tracker"
-        android:visibility="visible"
+        android:visibility="gone"
         layout="@layout/period_tracking_layout"/>
+    <include
+        android:id="@+id/container_fitness_tracker"
+        android:visibility="visible"
+        layout="@layout/fitness_tracking_layout"/>
 </LinearLayout>

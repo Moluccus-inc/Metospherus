@@ -71,8 +71,11 @@ import `in`.aabhasjindal.otptextview.OtpTextView
 import koleton.api.hideSkeleton
 import koleton.api.loadSkeleton
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import metospherus.app.R
 import metospherus.app.adaptors.CategoriesAdaptor
 import metospherus.app.adaptors.MainAdaptor
@@ -86,6 +89,7 @@ import metospherus.app.modules.GeneralSearchResults
 import metospherus.app.modules.GeneralTemplate
 import metospherus.app.utilities.AddOrRemoveModules
 import metospherus.app.utilities.Constructor
+import metospherus.app.utilities.Constructor.getCompanionShipFromLocalDatabase
 import metospherus.app.utilities.Constructor.hide
 import metospherus.app.utilities.Constructor.show
 import metospherus.app.utilities.MoluccusToast
@@ -112,7 +116,8 @@ class HomeFragment : Fragment() {
     private lateinit var storedVerificationId: String
 
     private val selectedImageLiveData = MutableLiveData<Uri>()
-    private val imguriholder = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uris ->
+    private val imguriholder =
+        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uris ->
             if (uris != null) {
                 selectedImageLiveData.value = uris
             } else {
@@ -189,6 +194,7 @@ class HomeFragment : Fragment() {
         getPermissionsTaskDB()
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     private fun setupMaterialSearchView() {
         val searchBar = view?.findViewById<SearchBar>(R.id.search_bar)
         searchBar?.setOnClickListener {
@@ -204,7 +210,8 @@ class HomeFragment : Fragment() {
                 searchAdapter = SearchAdaptor(requireContext())
                 searchRecyclerView?.layoutManager = LinearLayoutManager(requireContext())
                 searchRecyclerView?.adapter = searchAdapter
-                val searchPreviewResults = mutableListOf(
+                val searchHistory = mutableListOf<GeneralSearchResults>()
+                val searchPreviewResults = listOf(
                     GeneralSearchResults(
                         "Metospherus Comprehensive Medical System",
                         "Welcome and thanks for trying out Trevus our system brain",
@@ -214,23 +221,31 @@ class HomeFragment : Fragment() {
                         "Would you like me to help you with any inquiries"
                     )
                 )
-                searchAdapter.setData(searchPreviewResults)
+                searchHistory.addAll(searchPreviewResults)
+                GlobalScope.launch(Dispatchers.IO) {
+                    val generalSearchResults = getCompanionShipFromLocalDatabase(appDatabase)
+                    if (generalSearchResults != null) {
+                        val companionship = mutableListOf(
+                            GeneralSearchResults(
+                                generalSearchResults.questionAsked,
+                                generalSearchResults.responsesGiven
+                            )
+                        )
+                        searchHistory.addAll(companionship)
+                        withContext(Dispatchers.Main) {
+                            searchAdapter.setData(searchHistory)
+                        }
+                    }
+                    searchAdapter.setData(searchHistory)
+                }
                 searchableInputEditText.doAfterTextChanged {
                     val query = searchableInputEditText.text.toString()
-                    val matchingResults = searchPreviewResults.filter { result ->
+                    val matchingResults = searchHistory.filter { result ->
                         result.searchResponse.contains(query, ignoreCase = true)
                     }
                     when {
                         matchingResults.isNullOrEmpty() -> {
                             val repos = mutableListOf(
-                                GeneralSearchResults(
-                                    "...",
-                                    "...",
-                                ),
-                                GeneralSearchResults(
-                                    "...",
-                                    "...",
-                                ),
                                 GeneralSearchResults(
                                     "...",
                                     "...",
@@ -255,7 +270,13 @@ class HomeFragment : Fragment() {
 
                             searchableInputEditText.setOnEditorActionListener { _, actionId, _ ->
                                 if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
-                                    sendMessage(context, query, searchAdapter, searchRecyclerView)
+                                    sendMessage(
+                                        context,
+                                        query,
+                                        searchAdapter,
+                                        searchRecyclerView,
+                                        appDatabase
+                                    )
                                 }
                                 true
                             }
