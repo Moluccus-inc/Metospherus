@@ -9,8 +9,8 @@ import metospherus.app.database.profile_data.Profiles
 import metospherus.app.modules.GeneralBrainResponse
 import metospherus.app.modules.GeneralMenstrualCycle
 
-@Database(entities = [Profiles::class, GeneralMenstrualCycle::class, GeneralBrainResponse::class], version = 2)
-@TypeConverters(AvatarTypeConverter::class)
+@Database(entities = [Profiles::class, GeneralMenstrualCycle::class, GeneralBrainResponse::class], version = 5)
+@TypeConverters(TypeConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun profileLocal(): UserProfileDao
     abstract fun menstrualCycleLocal(): MenstrualCyclesDao

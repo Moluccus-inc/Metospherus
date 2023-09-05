@@ -94,7 +94,7 @@ class MedicalProfileFragment : Fragment() {
                 p0.let {
                     if (it?.isNotEmpty() == true) {
                         val inputs = it.toString().trim()
-                        updateFirebaseDatabase("name", inputs)
+                        updateFirebaseDatabase("generalDescription/usrPreferedName", inputs)
                     }
                 }
             }
@@ -110,7 +110,7 @@ class MedicalProfileFragment : Fragment() {
                 p0.let {
                     if (it?.isNotEmpty() == true) {
                         val inputs = it.toString().trim()
-                        updateFirebaseDatabase("email", inputs)
+                        updateFirebaseDatabase("generalDescription/usrPrimaryEmail", inputs)
                     }
                 }
             }
@@ -174,7 +174,7 @@ class MedicalProfileFragment : Fragment() {
                 dismiss()
             }
 
-            fullLegalNameInput.setText(userPatient.name)
+            fullLegalNameInput.setText(userPatient.generalDescription.usrPreferedName)
             doctorsEmailAddress.setText(userPatient.email)
             doctorsPhoneNumber.setText(userPatient.phoneNumber)
             aboutDoctorInput.setText(userPatient.medicalProfessionals.about)
@@ -200,10 +200,9 @@ class MedicalProfileFragment : Fragment() {
         CoroutineScope(Dispatchers.Main).launch {
             val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
             if (userPatient != null) {
-                binding.nameProfile.text = userPatient.name ?: "Not Set"
+                binding.nameProfile.text = userPatient.generalDescription.usrPreferedName ?: "Not Set"
                 binding.handleProfile.text = userPatient.handle ?: "Not Set"
-                binding.accountTypes.text =
-                    userPatient.medicalProfessionals.medicalProfessionType ?: "Not Set"
+                binding.accountTypes.text = userPatient.medicalProfessionals.medicalProfessionType ?: "Not Set"
                 binding.aboutDoctorTv.text = userPatient.medicalProfessionals.about ?: "Not Set"
 
                 Glide.with(requireContext())

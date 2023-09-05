@@ -41,6 +41,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,6 +49,7 @@ import metospherus.app.R
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.database.profile_data.Profiles
 import metospherus.app.databinding.FragmentProfileBinding
+import metospherus.app.utilities.Constructor
 import metospherus.app.utilities.Constructor.getUserProfilesFromDatabase
 import metospherus.app.utilities.MoluccusToast
 import java.text.SimpleDateFormat
@@ -62,6 +64,7 @@ class ProfileFragment : Fragment() {
     private lateinit var db: FirebaseDatabase
     private lateinit var appDatabase: AppDatabase
 
+    private var profileDetailsListener: ValueEventListener? = null
     private lateinit var imgAvatar: ShapeableImageView
     private val pickMedia =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -98,52 +101,70 @@ class ProfileFragment : Fragment() {
         }
 
         initProfileDetailsIfNeeded()
-    }
-
-    suspend fun insertOrUpdateUserProfile(userProfile: Profiles) {
-        withContext(Dispatchers.IO) {
-            appDatabase.profileLocal().insertOrUpdateUserPatient(userProfile)
-        }
+        startProfileDetailsListener()
     }
 
     override fun onResume() {
         super.onResume()
-        auth.currentUser?.uid?.let { userId ->
-            val profileDetails = db.getReference("participants").child(userId)
-            profileDetails.keepSynced(true)
-            profileDetails.addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val userProfile = snapshot.getValue(Profiles::class.java)
-                    if (userProfile != null) {
-                        lifecycleScope.launch {
-                            insertOrUpdateUserProfile(userProfile)
+        startProfileDetailsListener()
+        initProfileDetailsIfNeeded()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        stopProfileDetailsListener()
+    }
+
+    private fun startProfileDetailsListener() {
+        if (profileDetailsListener == null) {
+            auth.currentUser?.uid?.let { userId ->
+                val profileDetails = db.getReference("participants").child(userId)
+                profileDetails.keepSynced(true)
+                profileDetailsListener = profileDetails.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val userProfile = snapshot.getValue(Profiles::class.java)
+                        if (userProfile != null) {
+                            CoroutineScope(Dispatchers.Default).launch {
+                                Constructor.insertOrUpdateUserProfile(userProfile, appDatabase)
+                            }
                         }
                     }
-                }
-                override fun onCancelled(error: DatabaseError) {
-                    MoluccusToast(requireContext()).showError("Cancelled because ${error.message}")
-                }
-            })
+
+                    override fun onCancelled(error: DatabaseError) {
+                        MoluccusToast(requireContext()).showError("Cancelled because ${error.message}")
+                    }
+                })
+            }
         }
     }
+
+    private fun stopProfileDetailsListener() {
+        profileDetailsListener?.let { listener ->
+            auth.currentUser?.uid?.let { userId ->
+                val profileDetails = db.getReference("participants").child(userId)
+                profileDetails.removeEventListener(listener)
+            }
+            profileDetailsListener = null
+        }
+    }
+
     private fun initProfileDetailsIfNeeded() {
-        lifecycleScope.launch {
+        CoroutineScope(Dispatchers.Main).launch {
             val userPatient = getUserProfilesFromDatabase(appDatabase)
             if (userPatient != null) {
-                binding.name.text = userPatient.name ?: "Unknown"
-                binding.handle.text = userPatient.handle ?: "Unknown"
-                binding.address.text = userPatient.address ?: "Unknown Address"
-                binding.phoneNumber.text = userPatient.phoneNumber ?: "Unknown"
+                binding.name.text = userPatient.generalDescription.usrPreferedName ?: "Unknown"
+                binding.handle.text = userPatient.generalDescription.usrDistinguishedHandle ?: "Unknown"
+                binding.address.text = userPatient.generalDescription.physicalAddress ?: "Unknown Address"
+                binding.phoneNumber.text = userPatient.generalDescription.usrPrimaryPhone ?: "Unknown"
                 binding.accountTypes.text = userPatient.accountType ?: "Unknown Type"
-                binding.email.text = userPatient.email ?: "Unknown@email.com"
-                binding.dob.text = userPatient.dob ?: "Unknown"
-                binding.identifier.text = userPatient.userId ?: "Unknown"
+                binding.email.text = userPatient.generalDescription.usrPrimaryEmail ?: "Unknown@email.com"
+                binding.dob.text = userPatient.generalDescription.usrDateOfBirth ?: "Unknown"
+                binding.identifier.text = userPatient.generalDatabaseInformation.userGeneralIdentificationNumber ?: "Unknown"
 
-
-                binding.profileWeightTv.text = userPatient.weight ?: "Unknown"
-                binding.profileAllergiesTv.text = userPatient.allergies ?: "Unknown"
-                binding.bloodGroupTv.text = userPatient.blood_group ?: "Unknown"
-                binding.physicalHeightTv.text = userPatient.height ?: "Unknown"
+                binding.profileWeightTv.text = userPatient.generalHealthInformation.weightRecord ?: "Unknown"
+                binding.profileAllergiesTv.text = userPatient.generalHealthInformation.allergiesRecord ?: "Unknown"
+                binding.bloodGroupTv.text = userPatient.generalHealthInformation.bloodGroupRecord ?: "Unknown"
+                binding.physicalHeightTv.text = userPatient.generalHealthInformation.heightRecord ?: "Unknown"
 
                 Glide.with(requireContext())
                     .load(userPatient.avatar)
@@ -163,23 +184,17 @@ class ProfileFragment : Fragment() {
 
             val closeBottomSheetProfile = view.findViewById<ImageView>(R.id.CloseBottomSheetProfile)
             val preferredNameInput = view.findViewById<TextInputEditText>(R.id.preferredNameInput)
-            val genderIndentityInput =
-                view.findViewById<TextInputEditText>(R.id.genderIndentityInput)
-            val primaryLocationInput =
-                view.findViewById<TextInputEditText>(R.id.primaryLocationInput)
+            val genderIndentityInput = view.findViewById<TextInputEditText>(R.id.genderIndentityInput)
+            val primaryLocationInput = view.findViewById<TextInputEditText>(R.id.primaryLocationInput)
             val phoneNumberInput = view.findViewById<TextInputEditText>(R.id.phoneNumberInput)
 
             val fullLegalNameInput = view.findViewById<TextInputEditText>(R.id.fullLegalNameInput)
             val emailAddressInput = view.findViewById<TextInputEditText>(R.id.emailAddressInput)
-            val userHeightInput = view.findViewById<TextInputEditText>(R.id.userHeightInput)
-            val profileAllergiesTextEdit =
-                view.findViewById<TextInputEditText>(R.id.profileAllergiesTextEdit)
-            val profileBloodGroupTextEdit =
-                view.findViewById<TextInputEditText>(R.id.profileBloodGroupTextEdit)
-            val profileHeightTextEdit =
-                view.findViewById<TextInputEditText>(R.id.profileHeightTextEdit)
-            val profileWeightTextEdit =
-                view.findViewById<TextInputEditText>(R.id.profileWeightTextEdit)
+
+            val profileAllergiesTextEdit = view.findViewById<TextInputEditText>(R.id.profileAllergiesTextEdit)
+            val profileBloodGroupTextEdit = view.findViewById<TextInputEditText>(R.id.profileBloodGroupTextEdit)
+            val profileHeightTextEdit = view.findViewById<TextInputEditText>(R.id.profileHeightTextEdit)
+            val profileWeightTextEdit = view.findViewById<TextInputEditText>(R.id.profileWeightTextEdit)
 
             val dateOfBirthInput = view.findViewById<TextInputEditText>(R.id.dateOfBirthInput)
 
@@ -192,12 +207,27 @@ class ProfileFragment : Fragment() {
             primaryLocationInput.setOnClickListener {
                 fetchAddress(primaryLocationInput)
             }
-
+            phoneNumberInput.doAfterTextChanged { p0 ->
+                p0.let {
+                    if (it?.isNotEmpty() == true) {
+                        val inputs = it.toString().trim()
+                        updateFirebaseDatabase("generalDescription/usrPrimaryPhone", inputs)
+                    }
+                }
+            }
+            emailAddressInput.doAfterTextChanged { p0 ->
+                p0.let {
+                    if (it?.isNotEmpty() == true) {
+                        val inputs = it.toString().trim()
+                        updateFirebaseDatabase("generalDescription/usrPrimaryEmail", inputs)
+                    }
+                }
+            }
             profileAllergiesTextEdit.doAfterTextChanged { p0 ->
                 p0.let {
                     if (it?.isNotEmpty() == true) {
                         val inputs = it.toString().trim()
-                        updateFirebaseDatabase("allergies", inputs)
+                        updateFirebaseDatabase("generalHealthInformation/allergiesRecord", inputs)
                     }
                 }
             }
@@ -205,7 +235,7 @@ class ProfileFragment : Fragment() {
                 p0.let {
                     if (it?.isNotEmpty() == true) {
                         val inputs = it.toString().trim()
-                        updateFirebaseDatabase("blood_group", inputs)
+                        updateFirebaseDatabase("generalHealthInformation/bloodGroupRecord", inputs)
                     }
                 }
             }
@@ -213,7 +243,7 @@ class ProfileFragment : Fragment() {
                 p0.let {
                     if (it?.isNotEmpty() == true) {
                         val inputs = it.toString().trim()
-                        updateFirebaseDatabase("height", inputs)
+                        updateFirebaseDatabase("generalHealthInformation/heightRecord", inputs)
                     }
                 }
             }
@@ -221,16 +251,15 @@ class ProfileFragment : Fragment() {
                 p0.let {
                     if (it?.isNotEmpty() == true) {
                         val inputs = it.toString().trim()
-                        updateFirebaseDatabase("weight", inputs)
+                        updateFirebaseDatabase("generalHealthInformation/weightRecord", inputs)
                     }
                 }
             }
-
             preferredNameInput.doAfterTextChanged { p0 ->
                 p0.let {
                     if (it?.isNotEmpty() == true) {
                         val inputs = it.toString().trim()
-                        updateFirebaseDatabase("name", inputs)
+                        updateFirebaseDatabase("generalDescription/usrPreferedName", inputs)
                     }
                 }
             }
@@ -238,7 +267,7 @@ class ProfileFragment : Fragment() {
                 p0.let {
                     if (it?.isNotEmpty() == true) {
                         val inputs = it.toString().trim()
-                        updateFirebaseDatabase("gender", inputs)
+                        updateFirebaseDatabase("generalHealthInformation/genderIdRecord", inputs)
                     }
                 }
             }
@@ -246,7 +275,7 @@ class ProfileFragment : Fragment() {
                 p0.let {
                     if (it?.isNotEmpty() == true) {
                         val inputs = it.toString().trim()
-                        updateFirebaseDatabase("address", inputs)
+                        updateFirebaseDatabase("generalDescription/physicalAddress", inputs)
                     }
                 }
             }
@@ -254,19 +283,10 @@ class ProfileFragment : Fragment() {
                 p0.let {
                     if (it?.isNotEmpty() == true) {
                         val inputs = it.toString().trim()
-                        updateFirebaseDatabase("legalName", inputs)
+                        updateFirebaseDatabase("generalDescription/usrFullLegalName", inputs)
                     }
                 }
             }
-            userHeightInput.doAfterTextChanged { p0 ->
-                p0.let {
-                    if (it?.isNotEmpty() == true) {
-                        val inputs = it.toString().trim()
-                        updateFirebaseDatabase("height", inputs)
-                    }
-                }
-            }
-
             dateOfBirthInput.setOnTouchListener { _, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
                     val builder = MaterialDatePicker.Builder.datePicker()
@@ -298,7 +318,7 @@ class ProfileFragment : Fragment() {
                         val dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
                         val formattedDate = dateFormat.format(selectedCalendar.time)
 
-                        updateFirebaseDatabase("dob", formattedDate.toString())
+                        updateFirebaseDatabase("generalDescription/usrDateOfBirth", formattedDate.toString())
                         dateOfBirthInput.setText(formattedDate)
                     }
 
@@ -311,18 +331,18 @@ class ProfileFragment : Fragment() {
                 lifecycleScope.launch {
                     val userPatient = getUserProfilesFromDatabase(appDatabase)
                     if (userPatient != null) {
-                        preferredNameInput.setText(userPatient.name)
-                        genderIndentityInput.setText(userPatient.gender)
-                        primaryLocationInput.setText(userPatient.address)
-                        phoneNumberInput.setText(userPatient.phoneNumber)
-                        fullLegalNameInput.setText(userPatient.legalName)
-                        emailAddressInput.setText(userPatient.email)
-                        dateOfBirthInput.setText(userPatient.dob)
+                        preferredNameInput.setText(userPatient.generalDescription.usrPreferedName)
+                        genderIndentityInput.setText(userPatient.generalHealthInformation.genderIdRecord)
+                        primaryLocationInput.setText(userPatient.generalDescription.physicalAddress)
+                        phoneNumberInput.setText(userPatient.generalDescription.usrPrimaryPhone)
+                        fullLegalNameInput.setText(userPatient.generalDescription.usrFullLegalName)
+                        emailAddressInput.setText(userPatient.generalDescription.usrPrimaryEmail)
+                        dateOfBirthInput.setText(userPatient.generalDescription.usrDateOfBirth)
 
-                        profileWeightTextEdit.setText(userPatient.weight)
-                        profileAllergiesTextEdit.setText(userPatient.allergies)
-                        profileBloodGroupTextEdit.setText(userPatient.blood_group)
-                        profileHeightTextEdit.setText(userPatient.height)
+                        profileWeightTextEdit.setText(userPatient.generalHealthInformation.weightRecord)
+                        profileAllergiesTextEdit.setText(userPatient.generalHealthInformation.allergiesRecord)
+                        profileBloodGroupTextEdit.setText(userPatient.generalHealthInformation.bloodGroupRecord)
+                        profileHeightTextEdit.setText(userPatient.generalHealthInformation.heightRecord)
 
                         Glide.with(requireContext())
                             .load(userPatient.avatar)
@@ -334,6 +354,8 @@ class ProfileFragment : Fragment() {
 
             closeBottomSheetProfile.setOnClickListener {
                 dismiss()
+                initProfileDetailsIfNeeded()
+                startProfileDetailsListener()
             }
         }
     }

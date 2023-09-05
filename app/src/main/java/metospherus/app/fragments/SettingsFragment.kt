@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import metospherus.app.databinding.FragmentSecondBinding
 
-class SecondFragment : Fragment() {
+class SettingsFragment : Fragment() {
     private var _binding: FragmentSecondBinding? = null
     private val binding get() = _binding!!
 

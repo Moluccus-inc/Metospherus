@@ -45,6 +45,11 @@ object Constructor {
         Handler(Looper.myLooper()!!).postDelayed(task, delayMillis)
     }
 
+    suspend fun insertOrUpdateUserProfile(userProfile: Profiles, appDatabase: AppDatabase) {
+        withContext(Dispatchers.IO) {
+            appDatabase.profileLocal().insertOrUpdateUserPatient(userProfile)
+        }
+    }
     suspend fun getUserProfilesFromDatabase(appDatabase: AppDatabase): Profiles? {
         return appDatabase.profileLocal().getUserPatient()
     }

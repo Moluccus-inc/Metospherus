@@ -16,7 +16,6 @@ import metospherus.app.MainActivity
 import metospherus.app.R
 import metospherus.app.utilities.Constructor.CHANNEL_ID
 
-
 class NotificationHelper(private val context: Context) {
     @SuppressLint("MissingPermission")
     fun createNotification(title: String, message: String) {
@@ -57,7 +56,6 @@ class NotificationHelper(private val context: Context) {
                     .apply {
                         name = title
                         description = message
-                        lockscreenVisibility = 1
                     }
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as
                     NotificationManager

@@ -31,7 +31,7 @@ class MedicalProfessionsAdaptor(
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         @SuppressLint("NewApi")
         fun bind(generalTemplate: Profiles, context: Context) {
-            itemView.findViewById<TextView>(R.id.medicalNameHolder).text = generalTemplate.name
+            itemView.findViewById<TextView>(R.id.medicalNameHolder).text = generalTemplate.generalDescription.usrPreferedName
             itemView.findViewById<TextView>(R.id.medicalAboutHolder).text = generalTemplate.medicalProfessionals.about
             itemView.findViewById<TextView>(R.id.medicalSpacificationHolder).text = generalTemplate.medicalProfessionals.medicalProfessionType
 

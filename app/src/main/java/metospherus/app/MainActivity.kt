@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
@@ -37,6 +38,7 @@ import metospherus.app.modules.GeneralTemplate
 import metospherus.app.services.ScheduledRemindersManager
 import metospherus.app.update.UpdateUtil
 import metospherus.app.utilities.Constructor
+import metospherus.app.utilities.Constructor.insertOrUpdateUserProfile
 import metospherus.app.utilities.MoluccusToast
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -52,7 +54,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appDatabase: AppDatabase
 
     private lateinit var preferences: SharedPreferences
-
+    private var profileDetailsListener: ValueEventListener? = null
     private val PERMISSIONS_REQUEST_CODE = 1001
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,19 +70,19 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(navController.graph)
 
         checkUpdate()
+        startProfileDetailsListener()
+        publicModulesForAllUsers()
     }
-
     override fun onResume() {
         super.onResume()
         initializeMedicalIntakeAlertSystem()
-        getProfileDatilsIfExists()
+        startProfileDetailsListener()
         publicModulesForAllUsers()
     }
-
     override fun onPause() {
         super.onPause()
         initializeMedicalIntakeAlertSystem()
-        getProfileDatilsIfExists()
+        stopProfileDetailsListener()
         publicModulesForAllUsers()
     }
     private fun publicModulesForAllUsers() {
@@ -116,29 +118,36 @@ class MainActivity : AppCompatActivity() {
             })
         }
     }
-    private fun getProfileDatilsIfExists() {
-        auth.currentUser?.uid?.let { userId ->
-            val profileDetails = db.getReference("participants").child(userId)
-            profileDetails.keepSynced(true)
-            profileDetails.addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val userProfile = snapshot.getValue(Profiles::class.java)
-                    if (userProfile != null) {
-                        CoroutineScope(Dispatchers.Main).launch {
-                            insertOrUpdateUserProfile(userProfile)
+    private fun startProfileDetailsListener() {
+        if (profileDetailsListener == null) {
+            auth.currentUser?.uid?.let { userId ->
+                val profileDetails = db.getReference("participants").child(userId)
+                profileDetails.keepSynced(true)
+                profileDetailsListener = profileDetails.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val userProfile = snapshot.getValue(Profiles::class.java)
+                        if (userProfile != null) {
+                            CoroutineScope(Dispatchers.Default).launch {
+                                insertOrUpdateUserProfile(userProfile, appDatabase)
+                            }
                         }
                     }
-                }
 
-                override fun onCancelled(error: DatabaseError) {
-                    MoluccusToast(this@MainActivity).showError("Cancelled because ${error.message}")
-                }
-            })
+                    override fun onCancelled(error: DatabaseError) {
+                        MoluccusToast(this@MainActivity).showError("Cancelled because ${error.message}")
+                    }
+                })
+            }
         }
     }
-    suspend fun insertOrUpdateUserProfile(userProfile: Profiles) {
-        withContext(Dispatchers.IO) {
-            appDatabase.profileLocal().insertOrUpdateUserPatient(userProfile)
+
+    private fun stopProfileDetailsListener() {
+        profileDetailsListener?.let { listener ->
+            auth.currentUser?.uid?.let { userId ->
+                val profileDetails = db.getReference("participants").child(userId)
+                profileDetails.removeEventListener(listener)
+            }
+            profileDetailsListener = null
         }
     }
     private fun initializeMedicalIntakeAlertSystem() {
@@ -226,20 +235,17 @@ class MainActivity : AppCompatActivity() {
                             }
 
                             else -> {
-                                val startTimestamp =
-                                    System.currentTimeMillis() / 1000 // Get current timestamp in seconds
-                                val dateFormat =
-                                    SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault())
+                                val startTimestamp = System.currentTimeMillis() / 1000 // Get current timestamp in seconds
+                                val dateFormat = SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault())
                                 val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
 
-                                val exitDate =
-                                    dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
-                                val exitTime =
-                                    timeFormat.format(startTimestamp * 1000) // Convert to milliseconds
-
+                                val exitDate = dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
+                                val exitTime = timeFormat.format(startTimestamp * 1000) // Convert to milliseconds
                                 val activeStatus = mapOf(
-                                    "active_status" to false,
-                                    "active_time" to "$exitTime - $exitDate",
+                                    "generalSystemInformation" to mapOf(
+                                        "activeLogStatus" to false,
+                                        "activeTimeStatus" to "$exitTime - $exitDate",
+                                    )
                                 )
                                 usrDb.updateChildren(activeStatus)
                             }
@@ -257,7 +263,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
     @Deprecated("Deprecated in Java")
     override fun onRequestPermissionsResult(
         requestCode: Int,

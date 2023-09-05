@@ -1,6 +1,7 @@
 package metospherus.app.fragments
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.os.Build
@@ -38,6 +39,7 @@ import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.bottomsheets.setPeekHeight
 import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
+import com.afollestad.materialdialogs.lifecycle.lifecycleOwner
 import com.bumptech.glide.Glide
 import com.facebook.shimmer.Shimmer
 import com.google.android.material.button.MaterialButton
@@ -74,8 +76,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import metospherus.app.MainActivity
 import metospherus.app.R
 import metospherus.app.adaptors.CategoriesAdaptor
 import metospherus.app.adaptors.MainAdaptor
@@ -115,6 +119,7 @@ class HomeFragment : Fragment() {
     private lateinit var resendToken: PhoneAuthProvider.ForceResendingToken
     private lateinit var storedVerificationId: String
 
+    private var profileDetailsListener: ValueEventListener? = null
     private val selectedImageLiveData = MutableLiveData<Uri>()
     private val imguriholder =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uris ->
@@ -162,36 +167,81 @@ class HomeFragment : Fragment() {
         }
 
         var isDataLoading = false
-        binding.profileHolder.setOnClickListener {
-            if (isDataLoading) {
-                return@setOnClickListener
-            }
-            if (auth.currentUser != null) {
-                isDataLoading = true
-                CoroutineScope(Dispatchers.Main).launch {
-                    val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
-                    if (userPatient != null) {
-                        initProfileSheetIfNeeded(userPatient)
-                    } else {
-                        getPermissionsTaskDB()
-                    }
-                    isDataLoading = false
-                }
-            } else {
-                initBottomSheetsIfNeeded()
-            }
-        }
         CoroutineScope(Dispatchers.Main).launch {
             val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
-            if (userPatient != null) {
-                Glide.with(requireContext())
-                    .load(userPatient.avatar)
-                    .placeholder(R.drawable.holder)
-                    .into(binding.profilePicture)
+            when {
+                userPatient != null -> {
+                    Glide.with(requireContext())
+                        .load(userPatient.avatar)
+                        .placeholder(R.drawable.holder)
+                        .into(binding.profilePicture)
+
+                    binding.profileHolder.setOnClickListener {
+                        if (isDataLoading) {
+                            return@setOnClickListener
+                        }
+                        if (auth.currentUser != null) {
+                            isDataLoading = true
+                            initProfileSheetIfNeeded(userPatient)
+                            isDataLoading = false
+                        } else {
+                            initBottomSheetsIfNeeded()
+                        }
+                    }
+                }
+
+                else -> {
+                    getPermissionsTaskDB()
+                }
             }
         }
         setupMaterialSearchView()
         getPermissionsTaskDB()
+        startProfileDetailsListener()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        startProfileDetailsListener()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        stopProfileDetailsListener()
+    }
+
+    private fun startProfileDetailsListener() {
+        if (profileDetailsListener == null) {
+            auth.currentUser?.uid?.let { userId ->
+                val profileDetails = db.getReference("participants").child(userId)
+                profileDetails.keepSynced(true)
+                profileDetailsListener =
+                    profileDetails.addValueEventListener(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            val userProfile = snapshot.getValue(Profiles::class.java)
+                            if (userProfile != null) {
+                                CoroutineScope(Dispatchers.Default).launch {
+                                    Constructor.insertOrUpdateUserProfile(userProfile, appDatabase)
+                                }
+                            }
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            MoluccusToast(requireContext()).showError("Cancelled because ${error.message}")
+                        }
+                    })
+            }
+        }
+    }
+
+    private fun stopProfileDetailsListener() {
+        profileDetailsListener?.let { listener ->
+            auth.currentUser?.uid?.let { userId ->
+                val profileDetails = db.getReference("participants").child(userId)
+                profileDetails.removeEventListener(listener)
+            }
+            profileDetailsListener = null
+        }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -301,7 +351,8 @@ class HomeFragment : Fragment() {
                 usrDb.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         when {
-                            !dataSnapshot.hasChild("userId") -> {
+                            !dataSnapshot.child("generalDatabaseInformation")
+                                .hasChild("userGeneralIdentificationNumber") -> {
                                 initCompleteUserProfile(usrDb)
                             }
 
@@ -318,8 +369,10 @@ class HomeFragment : Fragment() {
                                     timeFormat.format(startTimestamp * 1000) // Convert to milliseconds
 
                                 val activeStatus = mapOf(
-                                    "active_status" to true,
-                                    "active_time" to "$exitTime - $exitDate",
+                                    "generalSystemInformation" to mapOf(
+                                        "activeLogStatus" to true,
+                                        "activeTimeStatus" to "$exitTime - $exitDate",
+                                    )
                                 )
                                 usrDb.updateChildren(activeStatus)
                             }
@@ -429,16 +482,21 @@ class HomeFragment : Fragment() {
 
                         val addProfileDetails = mapOf(
                             "accountType" to accountTypeHolder,
-                            "handle" to "@$handle",
-                            "userId" to userIdentification,
-                            "email" to email,
-                            "name" to userPreferedName.text.toString()
+                            "generalDatabaseInformation" to mapOf("userGeneralIdentificationNumber" to userIdentification),
+                            "generalDescription" to mapOf(
+                                "usrPreferedName" to userPreferedName.text.toString(),
+                                "usrPrimaryEmail" to email,
+                                "usrDistinguishedHandle" to "@$handle"
+                            )
                         )
 
                         usrDb.updateChildren(addProfileDetails)
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
                                     dismiss()
+                                    val restartIntent = Intent(context, MainActivity::class.java)
+                                    restartIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    context.startActivity(restartIntent)
                                     MoluccusToast(requireContext()).showSuccess("Profile updated successfully!!\uD83D\uDE0A")
                                 } else {
                                     MoluccusToast(requireContext()).showError("Error: ${task.exception?.message}")
@@ -531,7 +589,7 @@ class HomeFragment : Fragment() {
             val profileType = view.findViewById<TextView>(R.id.profileType)
             val profileHandler = view.findViewById<TextView>(R.id.profileHandler)
 
-            prefName.text = userPatient.name
+            prefName.text = userPatient.generalDescription.usrPreferedName
             profileType.text = userPatient.accountType
             profileHandler.text = userPatient.handle
 
@@ -751,9 +809,13 @@ class HomeFragment : Fragment() {
                                                 if (task.isSuccessful) {
                                                     val user = task.result?.user
                                                     val createUserDatabase = mapOf(
-                                                        "name" to "New Meto",
-                                                        "uid" to user?.uid!!,
-                                                        "phoneNumber" to user.phoneNumber!!
+                                                        "generalDescription" to mapOf(
+                                                            "usrPreferedName" to "New Meto",
+                                                            "usrPrimaryPhone" to user?.phoneNumber!!
+                                                        ),
+                                                        "generalDatabaseInformation" to mapOf(
+                                                            "userUniqueIdentificationNumber" to user.uid,
+                                                        ),
                                                     )
 
                                                     auth.currentUser?.let {

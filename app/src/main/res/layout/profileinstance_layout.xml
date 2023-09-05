@@ -145,22 +145,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
-                    android:visibility="gone"
-                    android:hint="Physical Height">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/userHeightInput"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text"
-                        android:minLines="1" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
                     android:hint="Primary Location">
 
                     <com.google.android.material.textfield.TextInputEditText
