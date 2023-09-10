@@ -60,7 +60,7 @@
         android:label="fragment_notification"
         tools:layout="@layout/fragment_notification" >
         <action
-            android:id="@+id/action_notificationFragment_to_HomeFragment"
+            android:id="@+id/action_home_from_notify"
             app:destination="@id/HomeFragment" />
     </fragment>
 </navigation>

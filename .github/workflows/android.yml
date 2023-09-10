@@ -61,7 +61,8 @@ jobs:
         with:
           files: app/build/outputs/apk/release/metospherus*
           draft: true
-          title: Release ${{ github.ref }}
+          name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref }}
           body: |
             # Metospherus A Comprehensive Medical System
             **What's New** 
