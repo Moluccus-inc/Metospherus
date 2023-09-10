@@ -2,6 +2,7 @@ package metospherus.app.trackers
 
 import android.content.Context
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.LifecycleCoroutineScope
@@ -9,7 +10,6 @@ import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.datetime.datePicker
-import com.afollestad.materialdialogs.internal.main.DialogLayout
 import com.google.android.material.chip.Chip
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import metospherus.app.R
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.utilities.Constructor
+import metospherus.app.utilities.Constructor.show
 import metospherus.app.utilities.updateFirebaseDatabase
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -25,13 +26,17 @@ import java.util.Locale
 
 class PeriodTracker {
     fun periodTrackerModule(
-        viewDialogSheet: DialogLayout,
+        viewDialogSheet: MaterialDialog,
         lifecycleScope: LifecycleCoroutineScope,
         appDatabase: AppDatabase,
         context: Context,
         auth: FirebaseAuth,
         db: FirebaseDatabase
     ) {
+        val containerPeriodTracker = viewDialogSheet.findViewById<LinearLayout>(R.id.container_period_tracker)
+        containerPeriodTracker.show()
+
+
         val setPeriodInCalendar = viewDialogSheet.findViewById<Chip>(R.id.setPeriodInCalander)
         val longestCycleView = viewDialogSheet.findViewById<TextView>(R.id.longestCycleView)
         val periodLengthView = viewDialogSheet.findViewById<TextView>(R.id.periodLengthView)

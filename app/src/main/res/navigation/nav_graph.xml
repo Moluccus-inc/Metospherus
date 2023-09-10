@@ -19,6 +19,9 @@
         <action
             android:id="@+id/action_medical_profile"
             app:destination="@id/medicalProfileFragment" />
+        <action
+            android:id="@+id/action_HomeFragment_to_notificationFragment"
+            app:destination="@id/notificationFragment" />
     </fragment>
 
     <fragment
@@ -49,6 +52,15 @@
         tools:layout="@layout/fragment_medical_profile" >
         <action
             android:id="@+id/action_home_from_mdprofile"
+            app:destination="@id/HomeFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/notificationFragment"
+        android:name="metospherus.app.fragments.NotificationFragment"
+        android:label="fragment_notification"
+        tools:layout="@layout/fragment_notification" >
+        <action
+            android:id="@+id/action_notificationFragment_to_HomeFragment"
             app:destination="@id/HomeFragment" />
     </fragment>
 </navigation>

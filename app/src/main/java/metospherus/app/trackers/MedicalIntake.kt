@@ -3,13 +3,13 @@ package metospherus.app.trackers
 import android.content.Context
 import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
+import android.widget.RelativeLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.datetime.timePicker
-import com.afollestad.materialdialogs.internal.main.DialogLayout
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -25,9 +25,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import metospherus.app.R
 import metospherus.app.adaptors.MedicineIntakeAdaptor
-import metospherus.app.databinding.ActivityMainBinding
-import metospherus.app.databinding.DialogContainerMedicineBinding
 import metospherus.app.modules.GeneralPills
+import metospherus.app.utilities.Constructor.show
 import metospherus.app.utilities.MoluccusToast
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -35,7 +34,7 @@ import java.util.Locale
 class MedicalIntake {
     @OptIn(DelicateCoroutinesApi::class)
     fun medicalIntakeModule(
-        viewDialogSheet: DialogLayout,
+        viewDialogSheet: MaterialDialog,
         addMedicalInTake: FloatingActionButton,
         auth: FirebaseAuth,
         db: FirebaseDatabase,
@@ -43,6 +42,9 @@ class MedicalIntake {
         recyclerViewTracker: RecyclerView,
         medicineIntakeAdapter: MedicineIntakeAdaptor
     ) {
+
+        val containerMedicalIntake = viewDialogSheet.findViewById<RelativeLayout>(R.id.container_medical_intake)
+        containerMedicalIntake.show()
         val medicineCount = viewDialogSheet.findViewById<Chip>(R.id.medicineCount)
 
         addMedicalInTake.setOnClickListener {

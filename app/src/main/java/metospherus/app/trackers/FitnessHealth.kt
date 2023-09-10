@@ -3,6 +3,7 @@ package metospherus.app.trackers
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.widget.NestedScrollView
 import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.internal.main.DialogLayout
@@ -16,6 +17,7 @@ import com.google.firebase.database.ktx.getValue
 import koleton.api.hideSkeleton
 import koleton.api.loadSkeleton
 import metospherus.app.R
+import metospherus.app.utilities.Constructor.show
 import metospherus.app.utilities.MoluccusToast
 class FitnessHealth {
     fun fitnessHealthModule(
@@ -24,6 +26,9 @@ class FitnessHealth {
         db: FirebaseDatabase,
         materialDialog: MaterialDialog
     ) {
+        val containerFitnessTracker = view.findViewById<NestedScrollView>(R.id.container_fitness_tracker)
+        containerFitnessTracker.show()
+
         val profileDetails =
             db.getReference("medicalmodules").child("userspecific").child("workOutFitness")
         profileDetails.keepSynced(true)

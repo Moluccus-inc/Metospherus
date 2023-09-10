@@ -4,17 +4,13 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.annotation.RequiresApi
-import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
-import com.afollestad.materialdialogs.bottomsheets.setPeekHeight
 import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -37,7 +33,6 @@ import metospherus.app.trackers.MedicalIntake
 import metospherus.app.trackers.PeriodTracker
 import metospherus.app.utilities.Constructor.hide
 import metospherus.app.utilities.Constructor.insertOrUpdateMenstrualCycles
-import metospherus.app.utilities.Constructor.show
 import java.util.Locale
 
 @SuppressLint("SetTextI18n")
@@ -58,11 +53,6 @@ fun bottomSheetGeneral(
         val closeBottomSheet = view.findViewById<ImageView>(R.id.closeBottomSheet)
         val titleBottomSheet = view.findViewById<TextView>(R.id.titleBottomSheet)
 
-        // Layouts
-        val containerMedicalIntake = view.findViewById<RelativeLayout>(R.id.container_medical_intake)
-        val containerPeriodTracker = view.findViewById<LinearLayout>(R.id.container_period_tracker)
-        val containerFitnessTracker = view.findViewById<NestedScrollView>(R.id.container_fitness_tracker)
-
         // fab
         val addMedicalInTake = view.findViewById<FloatingActionButton>(R.id.addMedicalInTake)
 
@@ -77,13 +67,9 @@ fun bottomSheetGeneral(
         val medicineIntakeAdapter = MedicineIntakeAdaptor(context, auth, db)
         when (generalTemplate.name?.trim()?.lowercase(Locale.ROOT)) {
             "Medical Intake".trim().lowercase(Locale.ROOT) -> {
-                containerMedicalIntake.show()
-                containerPeriodTracker.hide()
-                containerFitnessTracker.hide()
                 recyclerViewTracker = view.findViewById(R.id.recyclerViewBottomSheet)
-                setPeekHeight(Int.MAX_VALUE)
                 MedicalIntake().medicalIntakeModule(
-                    view,
+                    this,
                     addMedicalInTake,
                     auth,
                     db,
@@ -94,11 +80,8 @@ fun bottomSheetGeneral(
             }
 
             "Period Tracker".trim().lowercase(Locale.ROOT) -> {
-                containerPeriodTracker.show()
-                containerMedicalIntake.hide()
-                containerFitnessTracker.hide()
                 PeriodTracker().periodTrackerModule(
-                    view,
+                    this,
                     lifecycleScope,
                     appDatabase,
                     context,
@@ -108,22 +91,14 @@ fun bottomSheetGeneral(
             }
 
             "Fitness Health".trim().lowercase(Locale.ROOT) -> {
-                containerMedicalIntake.hide()
-                containerPeriodTracker.hide()
-                containerFitnessTracker.show()
                 FitnessHealth().fitnessHealthModule(view, auth, db, this)
             }
 
             "General Health".trim().lowercase(Locale.ROOT) -> {
-                containerMedicalIntake.hide()
-                containerPeriodTracker.hide()
-                containerFitnessTracker.hide()
                 GeneralHealth().generalHealthModule(this, auth, db)
             }
             else -> {
-                containerMedicalIntake.hide()
-                containerPeriodTracker.hide()
-                containerFitnessTracker.hide()
+                return@show
             }
         }
 
