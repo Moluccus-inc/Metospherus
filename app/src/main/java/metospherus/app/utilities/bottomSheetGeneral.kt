@@ -25,13 +25,14 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import metospherus.app.R
 import metospherus.app.adaptors.MedicineIntakeAdaptor
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.modules.GeneralMenstrualCycle
 import metospherus.app.modules.GeneralTemplate
+import metospherus.app.trackers.FitnessHealth
+import metospherus.app.trackers.GeneralHealth
 import metospherus.app.trackers.MedicalIntake
 import metospherus.app.trackers.PeriodTracker
 import metospherus.app.utilities.Constructor.hide
@@ -110,8 +111,15 @@ fun bottomSheetGeneral(
                 containerMedicalIntake.hide()
                 containerPeriodTracker.hide()
                 containerFitnessTracker.show()
+                FitnessHealth().fitnessHealthModule(view, auth, db, this)
             }
 
+            "General Health".trim().lowercase(Locale.ROOT) -> {
+                containerMedicalIntake.hide()
+                containerPeriodTracker.hide()
+                containerFitnessTracker.hide()
+                GeneralHealth().generalHealthModule(this, auth, db)
+            }
             else -> {
                 containerMedicalIntake.hide()
                 containerPeriodTracker.hide()

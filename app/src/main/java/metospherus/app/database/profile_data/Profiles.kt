@@ -20,7 +20,7 @@ data class Profiles(
     val generalSystemInformation: GeneralSystemInformation = GeneralSystemInformation(),
     val generalDatabaseInformation: GeneralDatabaseInformation = GeneralDatabaseInformation(),
     val generalLegalInformation: GeneralLegalInformation = GeneralLegalInformation(),
-    val medicalProfessionals: MedicalProfessionals = MedicalProfessionals() // Provide a default value for medicalProfessionals
+    val medicalProfessionals: MedicalProfessionals = MedicalProfessionals()
 ) {
     data class MedicalProfessionals(
         val about: String? = null,

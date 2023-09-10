@@ -20,11 +20,7 @@ class ScheduledRemindersManager(
             val reminderTitle = reminder.schTitle ?: continue
 
             val timeFormat = SimpleDateFormat("hh:mm a", Locale.US)
-            val parsedTime = timeFormat.parse(reminderTime)
-
-            if (parsedTime == null) {
-                continue
-            }
+            val parsedTime = timeFormat.parse(reminderTime) ?: continue
 
             val calendar = Calendar.getInstance()
             calendar.time = parsedTime
@@ -57,7 +53,6 @@ class ScheduledRemindersManager(
                 "message" to "This is A Reminder to take your $message medicine in time \uD83D\uDE0A",
             ))
             .build()
-
         WorkManager.getInstance(context).enqueue(myWorkRequest)
     }
 }

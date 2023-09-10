@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -34,6 +35,13 @@ class MedicalProfessionsAdaptor(
             itemView.findViewById<TextView>(R.id.medicalNameHolder).text = generalTemplate.generalDescription.usrPreferedName
             itemView.findViewById<TextView>(R.id.medicalAboutHolder).text = generalTemplate.medicalProfessionals.about
             itemView.findViewById<TextView>(R.id.medicalSpacificationHolder).text = generalTemplate.medicalProfessionals.medicalProfessionType
+            itemView.findViewById<FloatingActionButton>(R.id.medicalProfessionalsQuotations).setOnClickListener {
+
+            }
+
+            itemView.findViewById<FloatingActionButton>(R.id.medicalProfessionalsInquiry).setOnClickListener {
+
+            }
 
             Glide.with(context)
                 .load(generalTemplate.avatar)

@@ -108,4 +108,8 @@ object Constructor {
             else -> AlarmManager.INTERVAL_DAY
         }
     }
+
+    fun getGeneralLocationArea() {
+
+    }
 }

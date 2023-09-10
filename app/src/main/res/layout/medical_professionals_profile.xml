@@ -10,7 +10,7 @@
         android:orientation="vertical">
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="130dp">
+            android:layout_height="110dp">
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
@@ -25,8 +25,10 @@
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
                     android:layout_alignParentBottom="true"
+                    android:layout_alignParentEnd="true"
                     android:orientation="horizontal">
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/medicalProfessionalsQuotations"
                         style="@style/Widget.MaterialComponents.FloatingActionButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -34,22 +36,17 @@
                         app:maxImageSize="18dp"
                         app:fabCustomSize="35sp"/>
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/medicalProfessionalsInquiry"
                         style="@style/Widget.MaterialComponents.FloatingActionButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         app:fabCustomSize="35sp"
                         app:maxImageSize="18dp"
                         android:src="@drawable/round_chat"/>
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        style="@style/Widget.MaterialComponents.FloatingActionButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        app:fabCustomSize="35sp"
-                        app:maxImageSize="18dp"
-                        android:src="@drawable/round_more"/>
                 </LinearLayout>
             </RelativeLayout>
         </com.google.android.material.card.MaterialCardView>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -98,8 +95,6 @@
                 style="?android:attr/ratingBarStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerInParent="true"
                 android:max="5"
                 android:numStars="5"
                 android:rating="0.0"

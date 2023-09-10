@@ -9,6 +9,7 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.media.RingtoneManager
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
 import androidx.core.app.NotificationManagerCompat
@@ -27,7 +28,6 @@ class NotificationHelper(private val context: Context) {
             context, 0, intent,
             PendingIntent.FLAG_IMMUTABLE
         )
-        val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
         val icon = BitmapFactory.decodeResource(context.resources, R.drawable.medicine_reminder)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.icon)
@@ -39,10 +39,11 @@ class NotificationHelper(private val context: Context) {
                 NotificationCompat.BigPictureStyle().bigPicture(icon)
             )
             .setContentIntent(pendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setAutoCancel(true)
-            .setSound(alarmSound)
             .setVibrate(longArrayOf(1000, 1000, 1000, 1000, 1000))
+            .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
             .build()
 
         with(NotificationManagerCompat.from(context)) {
@@ -57,8 +58,7 @@ class NotificationHelper(private val context: Context) {
                         name = title
                         description = message
                     }
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as
-                    NotificationManager
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }
