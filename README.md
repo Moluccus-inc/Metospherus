@@ -8,31 +8,23 @@
 
 <!DOCTYPE html>
 <html>
-<head>
-    <style>
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-    </style>
-</head>
 <body>
-    <img src="images/moluccus-header.png" alt="Image 1" style="width:100%;">
+    <img src="https://raw.githubusercontent.com/Moluccus-inc/Metospherus/master/images/moluccus-header.png" alt="Image 1" style="width:100%;">
  <table>
   <tr>
-    <td><img src="images/metospherus (9).png" alt="Image 9"></td>
-    <td><img src="images/metospherus (6).png" alt="Image 6"></td>
-       <td><img src="images/metospherus (4).png" alt="Image 4"></td>
-    <td><img src="images/metospherus (3).png" alt="Image 3"></td>
+    <td><img src="https://raw.githubusercontent.com/Moluccus-inc/Metospherus/master/images/metospherus (9).png" alt="Image 9"></td>
+    <td><img src="https://raw.githubusercontent.com/Moluccus-inc/Metospherus/master/images/metospherus (6).png" alt="Image 6"></td>
+       <td><img src="https://raw.githubusercontent.com/Moluccus-inc/Metospherus/master/images/metospherus (4).png" alt="Image 4"></td>
+    <td><img src="https://raw.githubusercontent.com/Moluccus-inc/Metospherus/master/images/metospherus (3).png" alt="Image 3"></td>
   </tr>
   <tr>
-    <td><img src="images/metospherus (5).png" alt="Image 5"></td>
-    <td><img src="images/metospherus (2).png" alt="Image 2"></td>
-    <td><img src="images/metospherus (7).png" alt="Image 7"></td>
-    <td><img src="images/metospherus (8).png" alt="Image 8"></td>
+    <td><img src="https://raw.githubusercontent.com/Moluccus-inc/Metospherus/master/images/metospherus (5).png" alt="Image 5"></td>
+    <td><img src="https://raw.githubusercontent.com/Moluccus-inc/Metospherus/master/images/metospherus (2).png" alt="Image 2"></td>
+    <td><img src="https://raw.githubusercontent.com/Moluccus-inc/Metospherus/master/images/metospherus (7).png" alt="Image 7"></td>
+    <td><img src="https://raw.githubusercontent.com/Moluccus-inc/Metospherus/master/images/metospherus (8).png" alt="Image 8"></td>
   </tr>
   <tr>
-     <td><img src="images/metospherus (1).png" alt="Image 1"></td>
+     <td><img src="https://raw.githubusercontent.com/Moluccus-inc/Metospherus/master/images/metospherus (1).png" alt="Image 1"></td>
      <td colspan="3"></td>
   </tr>
 </table>
