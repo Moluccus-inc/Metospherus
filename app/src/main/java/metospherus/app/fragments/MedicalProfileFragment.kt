@@ -59,8 +59,8 @@ class MedicalProfileFragment : Fragment() {
         binding.editProfile.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
                 val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
-                if (userPatient != null) {
-                    initProfileEditingIfNeeded(userPatient)
+                userPatient?.let { profile ->
+                    initProfileEditingIfNeeded(profile)
                 }
             }
         }
@@ -199,17 +199,20 @@ class MedicalProfileFragment : Fragment() {
     private fun initialReturnProfileInformationIfNeeded() {
         CoroutineScope(Dispatchers.Main).launch {
             val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
-            if (userPatient != null) {
-                binding.nameProfile.text = userPatient.generalDescription.usrPreferedName ?: "Not Set"
-                binding.handleProfile.text = userPatient.handle ?: "Not Set"
-                binding.accountTypes.text = userPatient.medicalProfessionals.medicalProfessionType ?: "Not Set"
-                binding.aboutDoctorTv.text = userPatient.medicalProfessionals.about ?: "Not Set"
+            userPatient?.let { patient ->
+                binding.nameProfile.text =
+                    patient.generalDescription.usrPreferedName ?: "Not Set"
+                binding.handleProfile.text = patient.handle ?: "Not Set"
+                binding.accountTypes.text =
+                    patient.medicalProfessionals.medicalProfessionType ?: "Not Set"
+                binding.aboutDoctorTv.text = patient.medicalProfessionals.about ?: "Not Set"
 
                 Glide.with(requireContext())
-                    .load(userPatient.avatar)
+                    .load(patient.avatar)
                     .placeholder(R.drawable.holder)
                     .into(binding.avatar)
             }
+
         }
     }
 }

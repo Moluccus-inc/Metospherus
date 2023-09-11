@@ -5,10 +5,12 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,7 +41,7 @@ class CategoriesAdaptor(
                 .centerCrop()
                 .into(itemView.findViewById(R.id.imageCategory))
 
-            itemView.findViewById<MaterialCardView>(R.id.containerHolders).setOnClickListener {
+            itemView.findViewById<ImageView>(R.id.imageCategory).setOnClickListener {
                 CoroutineScope(Dispatchers.Main).launch {
                     val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
                     if (userPatient != null) {

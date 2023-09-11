@@ -4,12 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.text.Editable
-import android.text.InputType
-import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -17,17 +13,15 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
-import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
@@ -37,46 +31,30 @@ import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.bottomsheets.setPeekHeight
+import com.afollestad.materialdialogs.callbacks.onPreShow
 import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
-import com.afollestad.materialdialogs.lifecycle.lifecycleOwner
 import com.bumptech.glide.Glide
 import com.facebook.shimmer.Shimmer
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.search.SearchBar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import com.google.firebase.FirebaseException
-import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.FirebaseAuthMissingActivityForRecaptchaException
-import com.google.firebase.auth.PhoneAuthCredential
-import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
-import com.hbb20.countrypicker.config.CPDialogViewIds
-import com.hbb20.countrypicker.dialog.launchCountryPickerDialog
-import com.hbb20.countrypicker.models.CPCountry
-import `in`.aabhasjindal.otptextview.OTPListener
-import `in`.aabhasjindal.otptextview.OtpTextView
 import koleton.api.hideSkeleton
 import koleton.api.loadSkeleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import metospherus.app.MainActivity
@@ -94,12 +72,13 @@ import metospherus.app.modules.GeneralTemplate
 import metospherus.app.utilities.AddOrRemoveModules
 import metospherus.app.utilities.Constructor
 import metospherus.app.utilities.Constructor.getCompanionShipFromLocalDatabase
-import metospherus.app.utilities.Constructor.hide
-import metospherus.app.utilities.Constructor.show
+import metospherus.app.utilities.FirebaseConfig.retrieveRealtimeDatabase
+import metospherus.app.utilities.FirebaseConfig.retrieveRealtimeDatabaseOnListener
 import metospherus.app.utilities.MoluccusToast
+import metospherus.app.utilities.Validator.Companion.isValidEmail
+import metospherus.app.utilities.initBottomSheetsIfNeeded
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -116,8 +95,8 @@ class HomeFragment : Fragment() {
     private lateinit var db: FirebaseDatabase
     private lateinit var appDatabase: AppDatabase
     private lateinit var imageHolder: ImageView
-    private lateinit var resendToken: PhoneAuthProvider.ForceResendingToken
-    private lateinit var storedVerificationId: String
+
+    private lateinit var metospherus: MoluccusToast
 
     private var profileDetailsListener: ValueEventListener? = null
     private val selectedImageLiveData = MutableLiveData<Uri>()
@@ -155,6 +134,9 @@ class HomeFragment : Fragment() {
         mainAdapter = MainAdaptor(requireContext(), lifecycleScope)
         categoryAdapter = CategoriesAdaptor(requireContext(), appDatabase)
 
+        recyclerViewTracker.adapter = mainAdapter
+        metospherus = MoluccusToast(requireContext())
+
         initializeTracker()
         initializeCatagories()
 
@@ -169,30 +151,24 @@ class HomeFragment : Fragment() {
         var isDataLoading = false
         CoroutineScope(Dispatchers.Main).launch {
             val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
-            when {
-                userPatient != null -> {
-                    Glide.with(requireContext())
-                        .load(userPatient.avatar)
-                        .placeholder(R.drawable.holder)
-                        .into(binding.profilePicture)
+            userPatient?.let { profile ->
+                Glide.with(requireContext())
+                    .load(profile.avatar)
+                    .placeholder(R.drawable.holder)
+                    .into(binding.profilePicture)
 
-                    binding.profileHolder.setOnClickListener {
-                        if (isDataLoading) {
-                            return@setOnClickListener
+                binding.profileHolder.setOnClickListener {
+                    when {
+                        auth.currentUser != null -> {
+                            initProfileSheetIfNeeded(profile)
                         }
-                        if (auth.currentUser != null) {
-                            isDataLoading = true
-                            initProfileSheetIfNeeded(userPatient)
-                            isDataLoading = false
-                        } else {
-                            initBottomSheetsIfNeeded()
+                        else -> {
+                            initBottomSheetsIfNeeded(requireContext(), requireActivity(), auth, db)
                         }
                     }
                 }
-
-                else -> {
-                    getPermissionsTaskDB()
-                }
+            } ?: run {
+                getPermissionsTaskDB()
             }
         }
         setupMaterialSearchView()
@@ -213,21 +189,13 @@ class HomeFragment : Fragment() {
     private fun startProfileDetailsListener() {
         if (profileDetailsListener == null) {
             auth.currentUser?.uid?.let { userId ->
-                val profileDetails = db.getReference("participants").child(userId)
-                profileDetails.keepSynced(true)
-                profileDetailsListener =
-                    profileDetails.addValueEventListener(object : ValueEventListener {
-                        override fun onDataChange(snapshot: DataSnapshot) {
-                            val userProfile = snapshot.getValue(Profiles::class.java)
-                            if (userProfile != null) {
-                                CoroutineScope(Dispatchers.Default).launch {
-                                    Constructor.insertOrUpdateUserProfile(userProfile, appDatabase)
-                                }
+                retrieveRealtimeDatabaseOnListener(db, "participants/${userId}", requireContext(),
+                    onDataChange = { snapshot ->
+                        val userProfile = snapshot.getValue(Profiles::class.java)
+                        if (userProfile != null) {
+                            CoroutineScope(Dispatchers.Default).launch {
+                                Constructor.insertOrUpdateUserProfile(userProfile, appDatabase)
                             }
-                        }
-
-                        override fun onCancelled(error: DatabaseError) {
-                            MoluccusToast(requireContext()).showError("Cancelled because ${error.message}")
                         }
                     })
             }
@@ -237,8 +205,7 @@ class HomeFragment : Fragment() {
     private fun stopProfileDetailsListener() {
         profileDetailsListener?.let { listener ->
             auth.currentUser?.uid?.let { userId ->
-                val profileDetails = db.getReference("participants").child(userId)
-                profileDetails.removeEventListener(listener)
+                retrieveRealtimeDatabase(db, "participants/${userId}").removeEventListener(listener)
             }
             profileDetailsListener = null
         }
@@ -344,50 +311,15 @@ class HomeFragment : Fragment() {
     }
 
     private fun getPermissionsTaskDB() {
-        when {
-            auth.currentUser != null -> {
-                val usrDb = db.getReference("participants").child(auth.currentUser!!.uid)
-                usrDb.keepSynced(true)
-                usrDb.addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        when {
-                            !dataSnapshot.child("generalDatabaseInformation")
-                                .hasChild("userGeneralIdentificationNumber") -> {
-                                initCompleteUserProfile(usrDb)
-                            }
-
-                            else -> {
-                                val startTimestamp =
-                                    System.currentTimeMillis() / 1000 // Get current timestamp in seconds
-                                val dateFormat =
-                                    SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault())
-                                val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
-
-                                val exitDate =
-                                    dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
-                                val exitTime =
-                                    timeFormat.format(startTimestamp * 1000) // Convert to milliseconds
-
-                                val activeStatus = mapOf(
-                                    "generalSystemInformation" to mapOf(
-                                        "activeLogStatus" to true,
-                                        "activeTimeStatus" to "$exitTime - $exitDate",
-                                    )
-                                )
-                                usrDb.updateChildren(activeStatus)
-                            }
-                        }
-                    }
-
-                    override fun onCancelled(databaseError: DatabaseError) {
-                        // Handle the error if needed.
+        auth.currentUser?.uid?.let { userId ->
+            retrieveRealtimeDatabaseOnListener(db, "participants/${userId}", requireContext(),
+                onDataChange = { snapshot ->
+                    if (!snapshot.child("generalDatabaseInformation")
+                            .hasChild("userGeneralIdentificationNumber")
+                    ) {
+                        initCompleteUserProfile(snapshot.ref)
                     }
                 })
-            }
-
-            else -> {
-                // do nothing
-            }
         }
     }
 
@@ -448,10 +380,8 @@ class HomeFragment : Fragment() {
             usersEmail.doAfterTextChanged {
                 val input = it.toString()
                 if (isValidEmail(input)) {
-                    // Email is valid, remove any previous error message if shown
                     usersEmailLayout.error = null
                 } else {
-                    // Show an error message to the user indicating that the email format is incorrect
                     usersEmailLayout.error = "Invalid email format"
                 }
             }
@@ -508,17 +438,12 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun isValidEmail(email: String): Boolean {
-        val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
-        return email.matches(emailPattern.toRegex())
-    }
-
     private fun initializeCatagories() {
-        val categoriesGeneralModulesDB = db.getReference("medicalmodules").child("Categories")
-        categoriesGeneralModulesDB.keepSynced(true)
-        categoriesGeneralModulesDB.addValueEventListener(object : ValueEventListener {
-            val trackerInstance = mutableListOf<GeneralCategory>()
-            override fun onDataChange(snapshot: DataSnapshot) {
+        val trackerInstance = mutableListOf<GeneralCategory>()
+        retrieveRealtimeDatabaseOnListener(db,
+            "medicalmodules/Categories",
+            context = requireContext(),
+            onDataChange = { snapshot ->
                 trackerInstance.clear()
                 for (dataSnapshot in snapshot.children) {
                     val modulesData = dataSnapshot.getValue(GeneralCategory::class.java)
@@ -528,24 +453,16 @@ class HomeFragment : Fragment() {
                 }
                 categoryAdapter.setData(trackerInstance)
                 recylerCatagories.adapter = categoryAdapter
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                MoluccusToast(requireContext()).showError("Cancelled ${error.message}")
-            }
-        })
+            })
     }
 
     private fun initializeTracker() {
-        recyclerViewTracker.adapter = mainAdapter
         auth.currentUser?.let { currentUser ->
-            val patientGeneralModulesDB = db.getReference("medicalmodules")
-                .child("userspecific")
-                .child("modules").child(currentUser.uid)
-            patientGeneralModulesDB.keepSynced(true)
-            patientGeneralModulesDB.addValueEventListener(object : ValueEventListener {
-                val moduleTemps = mutableListOf<GeneralTemplate>()
-                override fun onDataChange(snapshot: DataSnapshot) {
+            val moduleTemps = mutableListOf<GeneralTemplate>()
+            retrieveRealtimeDatabaseOnListener(db,
+                "medicalmodules/userspecific/modules/${currentUser.uid}",
+                requireContext(),
+                onDataChange = { snapshot ->
                     moduleTemps.clear()
                     for (snapshotItem in snapshot.children) {
                         val modulesData = snapshotItem.getValue(GeneralTemplate::class.java)
@@ -556,12 +473,7 @@ class HomeFragment : Fragment() {
                         }
                     }
                     mainAdapter.setData(moduleTemps)
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    MoluccusToast(requireContext()).showError("Cancelled ${error.message}")
-                }
-            })
+                })
         }
 
         val notLoggedIn = mutableListOf(
@@ -580,19 +492,21 @@ class HomeFragment : Fragment() {
             cornerRadius(20f)
             cancelOnTouchOutside(false)
 
-            val profileActionLayout = view.findViewById<MaterialCardView>(R.id.profileActionLayout)
-            val shareInformation = view.findViewById<MaterialCardView>(R.id.shareInformation)
+            val profileActionLayout = view.findViewById<ImageView>(R.id.profileActionLayout)
+            val shareInformation = view.findViewById<ImageView>(R.id.shareInformation)
             val closeHolder = view.findViewById<ImageView>(R.id.closeHolder)
             val profileImage = view.findViewById<ImageView>(R.id.profileImage)
+            val settingActionLayout = view.findViewById<ImageView>(R.id.settingActionLayout)
 
             val prefName = view.findViewById<TextView>(R.id.prefName)
             val profileType = view.findViewById<TextView>(R.id.profileType)
             val profileHandler = view.findViewById<TextView>(R.id.profileHandler)
 
-            prefName.text = userPatient.generalDescription.usrPreferedName
-            profileType.text = userPatient.accountType
-            profileHandler.text = userPatient.handle
-
+            onPreShow {
+                prefName.text = userPatient.generalDescription.usrPreferedName
+                profileType.text = userPatient.accountType
+                profileHandler.text = userPatient.handle
+            }
             Glide.with(requireContext())
                 .load(userPatient.avatar)
                 .placeholder(R.drawable.holder)
@@ -617,7 +531,11 @@ class HomeFragment : Fragment() {
             }
 
             shareInformation.setOnClickListener {
+            }
 
+            settingActionLayout.setOnClickListener {
+                dismiss()
+                findNavController().navigate(R.id.action_to_settings)
             }
 
             closeHolder.setOnClickListener {
@@ -630,268 +548,6 @@ class HomeFragment : Fragment() {
                         R.dimen.dialog_margin_horizontal
                     ))
                 window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
-            }
-        }
-    }
-
-    @SuppressLint("SetTextI18n")
-    private fun initBottomSheetsIfNeeded() {
-        MaterialDialog(requireContext(), BottomSheet(LayoutMode.WRAP_CONTENT)).show {
-            customView(R.layout.authentication_layout)
-            cornerRadius(20f)
-            cancelOnTouchOutside(false)
-            setPeekHeight(Int.MAX_VALUE)
-
-            val imgFlagHolder = view.findViewById<TextView>(R.id.imgFlagHolder)
-            val countryName = view.findViewById<TextView>(R.id.countryName)
-            val countryCodeName = view.findViewById<TextView>(R.id.countryCodeName)
-
-            val phoneInputLayout = view.findViewById<LinearLayoutCompat>(R.id.phoneInputLayout)
-            val codeInputLayout = view.findViewById<LinearLayoutCompat>(R.id.codeInputLayout)
-            val otpView = view.findViewById<OtpTextView>(R.id.otp_view)
-            val enterOTP = view.findViewById<TextView>(R.id.enterOTP)
-            val createAccountConsent =
-                view.findViewById<MaterialCheckBox>(R.id.createAccountConsent)
-            val resendTokeOpt = view.findViewById<TextView>(R.id.resendTokeOpt)
-
-            val phoneNumberButton = view.findViewById<MaterialButton>(R.id.phoneNumberButton)
-            val completeVerification = view.findViewById<MaterialButton>(R.id.completeVerification)
-            val phoneNumberInputs = view.findViewById<EditText>(R.id.phoneNumberInput)
-            val countryCodePickerLayout =
-                view.findViewById<MaterialCardView>(R.id.countryCodePickerLayout)
-
-            phoneNumberButton.hide()
-            createAccountConsent.isChecked = false
-            createAccountConsent.setOnCheckedChangeListener { _, isChecked ->
-                when (isChecked) {
-                    true -> {
-                        phoneNumberButton.show()
-                    }
-
-                    false -> {
-                        phoneNumberButton.hide()
-                    }
-                }
-            }
-
-            phoneInputLayout.show()
-            codeInputLayout.hide()
-
-            val cpDialogViewIds = CPDialogViewIds(
-                R.layout.custom_country_code_dialog,
-                R.id.customDialogPicker,
-                R.id.recyclerViewDialog,
-                R.id.title_textview,
-                R.id.search_view,
-                null,
-                null,
-            )
-            val initialPhCode = "+256"
-            phoneNumberInputs.setText(initialPhCode)
-            phoneNumberInputs.setSelection(initialPhCode.length)
-
-            countryCodePickerLayout.setOnClickListener {
-                windowContext.launchCountryPickerDialog(
-                    customMasterCountries = "UG,TZ,KE,TZ,RW,US,CA,DE",
-                    preferredCountryCodes = "UG,TZ,KE",
-                    dialogViewIds = cpDialogViewIds,
-                    secondaryTextGenerator = { country -> country.capitalEnglishName },
-                    showFullScreen = true,
-                    useCache = false
-                ) { selectedCountry: CPCountry? ->
-                    imgFlagHolder.text = "${selectedCountry?.flagEmoji}"
-                    countryName.text = "${selectedCountry?.name}"
-                    countryCodeName.text = "+${selectedCountry?.phoneCode}"
-                    phoneNumberInputs.inputType = InputType.TYPE_CLASS_PHONE
-                    val initialPhoneCode = "+${selectedCountry?.phoneCode}"
-                    phoneNumberInputs.setText(initialPhoneCode)
-                    phoneNumberInputs.setSelection(initialPhoneCode.length)
-                    phoneNumberInputs.addTextChangedListener(object : TextWatcher {
-                        override fun beforeTextChanged(
-                            s: CharSequence?,
-                            start: Int,
-                            count: Int,
-                            after: Int
-                        ) {
-                        }
-
-                        override fun onTextChanged(
-                            s: CharSequence?,
-                            start: Int,
-                            before: Int,
-                            count: Int
-                        ) {
-                        }
-
-                        override fun afterTextChanged(editable: Editable?) {
-                            val inputText = editable.toString()
-                            val countryCode = "+${selectedCountry?.phoneCode}"
-
-                            if (inputText.startsWith(countryCode)) {
-                                // The country code is intact, do nothing
-                            } else {
-                                phoneNumberInputs.setText(countryCode)
-                                phoneNumberInputs.setSelection(countryCode.length)
-                            }
-                        }
-                    })
-
-                }
-            }
-
-            val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-                @RequiresApi(Build.VERSION_CODES.O)
-                override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-                    dismiss()
-                }
-
-                override fun onVerificationFailed(e: FirebaseException) {
-                    when (e) {
-                        is FirebaseAuthInvalidCredentialsException -> {
-                            phoneInputLayout.show()
-                            codeInputLayout.hide()
-                            MoluccusToast(windowContext).showError("Invalid request")
-                        }
-
-                        is FirebaseTooManyRequestsException -> {
-                            phoneInputLayout.show()
-                            codeInputLayout.hide()
-                            MoluccusToast(windowContext).showInformation("The SMS quota has been exceeded")
-                        }
-
-                        is FirebaseAuthMissingActivityForRecaptchaException -> {
-                            phoneInputLayout.show()
-                            codeInputLayout.hide()
-                            MoluccusToast(windowContext).showInformation("reCAPTCHA verification attempted with null Activity")
-                        }
-                    }
-                }
-
-                override fun onCodeSent(
-                    verificationId: String,
-                    token: PhoneAuthProvider.ForceResendingToken,
-                ) {
-                    resendToken = token
-                    storedVerificationId = verificationId
-
-                    resendTokeOpt.setOnClickListener {
-                        enterOTP.clearFocus()
-                        phoneInputLayout.show()
-                        codeInputLayout.hide()
-                    }
-                    enterOTP.text = "Enter the OTP code sent to ${
-                        phoneNumberInputs.text?.trim().toString()
-                            .replace(" ", "")
-                    } below to verify your phone number."
-
-                    phoneInputLayout.hide()
-                    codeInputLayout.show()
-
-                    otpView.requestFocusOTP()
-                    completeVerification.hide()
-                    otpView.otpListener = object : OTPListener {
-                        override fun onInteractionListener() {}
-
-                        @RequiresApi(Build.VERSION_CODES.O)
-                        override fun onOTPComplete(otp: String) {
-                            completeVerification.show()
-                            completeVerification.setOnClickListener {
-                                when {
-                                    otp.isNotEmpty() -> {
-                                        val credentialAuth: PhoneAuthCredential =
-                                            PhoneAuthProvider.getCredential(
-                                                verificationId,
-                                                otp
-                                            )
-
-                                        auth.signInWithCredential(credentialAuth)
-                                            .addOnCompleteListener(requireActivity()) { task ->
-                                                if (task.isSuccessful) {
-                                                    val user = task.result?.user
-                                                    val createUserDatabase = mapOf(
-                                                        "generalDescription" to mapOf(
-                                                            "usrPreferedName" to "New Meto",
-                                                            "usrPrimaryPhone" to user?.phoneNumber!!
-                                                        ),
-                                                        "generalDatabaseInformation" to mapOf(
-                                                            "userUniqueIdentificationNumber" to user.uid,
-                                                        ),
-                                                    )
-
-                                                    auth.currentUser?.let {
-                                                        val participants =
-                                                            db.getReference("participants")
-                                                                .child(it.uid)
-                                                        participants.addValueEventListener(object :
-                                                            ValueEventListener {
-                                                            override fun onDataChange(snapshot: DataSnapshot) {
-                                                                if (snapshot.exists()) {
-                                                                    dismiss()
-                                                                    MoluccusToast(windowContext).showSuccess(
-                                                                        "Welcome Back To Metospherus A Comprehensive Medical System."
-                                                                    )
-                                                                } else {
-                                                                    participants.setValue(
-                                                                        createUserDatabase
-                                                                    )
-                                                                        .addOnSuccessListener {
-                                                                            dismiss()
-                                                                            MoluccusToast(
-                                                                                windowContext
-                                                                            ).showSuccess("Welcome To Metospherus A Comprehensive Medical System")
-                                                                        }
-                                                                        .addOnFailureListener { exception ->
-                                                                            MoluccusToast(
-                                                                                windowContext
-                                                                            ).showError("Error !${exception.message}")
-                                                                        }
-                                                                }
-                                                            }
-
-                                                            override fun onCancelled(error: DatabaseError) {
-                                                                TODO("Not yet implemented")
-                                                            }
-
-                                                        })
-                                                    }
-                                                } else {
-                                                    //Log.w(TAG, "signInWithCredential:failure", task.exception)
-                                                    when (task.exception) {
-                                                        is FirebaseAuthInvalidCredentialsException -> {
-                                                            // The verification code entered was invalid
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                    }
-
-                                    else -> {
-                                        otpView.showError()
-                                        otpView.resetState()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            phoneNumberButton.setOnClickListener {
-                val options = PhoneAuthOptions.newBuilder(auth)
-                    .setPhoneNumber(
-                        phoneNumberInputs.text?.trim().toString().replace(" ", "")
-                    )
-                    .setTimeout(60L, TimeUnit.SECONDS)
-                    .setActivity(requireActivity())
-                    .setCallbacks(callbacks)
-                    .build()
-
-                Toast.makeText(
-                    requireContext(),
-                    phoneNumberInputs.text?.trim().toString().replace(" ", ""),
-                    Toast.LENGTH_SHORT
-                ).show()
-                PhoneAuthProvider.verifyPhoneNumber(options)
             }
         }
     }
@@ -992,7 +648,6 @@ class HomeFragment : Fragment() {
                                         val uploadTask = imageRef.putFile(selectedImageUri)
                                         uploadTask.addOnSuccessListener {
                                             imageRef.downloadUrl.addOnSuccessListener { uri ->
-
                                                 val startTimestamp =
                                                     System.currentTimeMillis() / 1000 // Get current timestamp in seconds
                                                 val dateFormat = SimpleDateFormat(

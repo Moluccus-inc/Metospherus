@@ -1,6 +1,8 @@
 package metospherus.app.trackers
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -11,6 +13,7 @@ import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.datetime.datePicker
 import com.google.android.material.chip.Chip
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -25,6 +28,7 @@ import java.util.Calendar
 import java.util.Locale
 
 class PeriodTracker {
+    @SuppressLint("SetTextI18n")
     fun periodTrackerModule(
         viewDialogSheet: MaterialDialog,
         lifecycleScope: LifecycleCoroutineScope,
@@ -49,33 +53,31 @@ class PeriodTracker {
 
         lifecycleScope.launch {
             val userMenstrualCycles = Constructor.getMenstrualCyclesFromLocalDatabase(appDatabase)
-            userMenstrualCycles?.let {
+            userMenstrualCycles?.let { cycleValues ->
                 val currentDateMillis = Calendar.getInstance().timeInMillis
-                val previousEndDateMillis = it.previous_end_date?.let { endDateStr ->
+                val previousEndDateMillis = cycleValues.previous_end_date?.let { endDateStr ->
                     val endDate = SimpleDateFormat("MMM dd, yyyy", Locale.US).parse(endDateStr)
                     endDate?.time ?: 0
                 } ?: currentDateMillis
 
-                val averageCycleLengthMillis = it.cycle_length!!.toInt() * 24 * 60 * 60 * 1000
+                val averageCycleLengthMillis = cycleValues.cycle_length!!.toInt() * 24 * 60 * 60 * 1000
                 val nextPeriodStartDateMillis = previousEndDateMillis + averageCycleLengthMillis
+                val currentDayMillis = currentDateMillis - nextPeriodStartDateMillis
+                val currentDay = (currentDayMillis / (1000 * 60 * 60 * 24)).toInt()
 
-                //val currentDate = Calendar.getInstance()
-                val nextPeriodStartDates = Calendar.getInstance()
-                nextPeriodStartDates.timeInMillis = nextPeriodStartDateMillis
+                if (currentDay == 0) {
+                    showCycleStartPopup(context, auth, db)
+                    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.US)
+                    cycleValues.previous_start_date = dateFormat.format(currentDateMillis)
+                    updateFirebaseDatabase(
+                        "previous_start_date",
+                        dateFormat.format(nextPeriodStartDateMillis).toString(),
+                        auth,
+                        db
+                    )
+                }
 
-                val daysLeft = ((nextPeriodStartDateMillis - currentDateMillis) / (1000 * 60 * 60 * 24)).toInt()
-
-                avarageCycleView.text = it.cycle_length.toString()
-                val nextPeriodStartDateFormatted = SimpleDateFormat("dd. MMM", Locale.US).format(nextPeriodStartDates.time)
-                nextPeriodStartDate.text = nextPeriodStartDateFormatted
-
-                nextPeriodIn.text = "$daysLeft Days"
-
-                val nextFertileStartDateMillis = nextPeriodStartDateMillis - (averageCycleLengthMillis * 0.4).toLong()
-                val nextFertileStartFormatted =
-                    SimpleDateFormat("dd. MMM", Locale.US).format(nextFertileStartDateMillis)
-                nextFertilePhase.text = nextFertileStartFormatted
-
+                val nextFertileStartDateMillis = nextPeriodStartDateMillis + (averageCycleLengthMillis * 0.4).toLong()
                 val safeLowFertilityStartMillis = nextFertileStartDateMillis - (averageCycleLengthMillis * 0.2).toLong()
                 val safeHighFertilityEndMillis = nextFertileStartDateMillis + (averageCycleLengthMillis * 0.2).toLong()
 
@@ -84,15 +86,31 @@ class PeriodTracker {
                     currentDateMillis <= safeHighFertilityEndMillis -> "Medium"
                     else -> "High"
                 }
+
+                val textColor = when {
+                    currentDay in 1 until 5 -> Color.RED
+                    (currentDay >= 5) && (currentDay <= cycleValues.cycle_length.toInt()) -> Color.YELLOW
+                    else -> Color.LTGRAY
+                }
+
+                avarageCycleView.text = cycleValues.cycle_length.toString()
+                val nextPeriodStartDateFormatted = SimpleDateFormat("dd. MMM", Locale.US).format(nextPeriodStartDateMillis)
+                nextPeriodStartDate.text = nextPeriodStartDateFormatted
+                nextPeriodIn.text = "$currentDay Days"
+                nextFertilePhase.text = SimpleDateFormat("dd. MMM", Locale.US).format(nextFertileStartDateMillis)
                 chancesOfPregnancy.text = safetyLevel
+                cycleVariation.text = "${(cycleValues.longest_cycle!!.toInt() - cycleValues.cycle_length.toInt())} days"
+                periodLengthView.text = "${cycleValues.cycle_length} days"
+                longestCycleView.text = "${cycleValues.longest_cycle} days"
 
-                val cycleVariationMillis =
-                    (it.longest_cycle!!.toInt() - it.cycle_length.toInt()) * 24 * 60 * 60 * 1000
-                val cycleVariationDays = (cycleVariationMillis / (1000 * 60 * 60 * 24))
-                cycleVariation.text = "$cycleVariationDays days"
-
-                periodLengthView.text = "${it.cycle_length} days"
-                longestCycleView.text = "${it.longest_cycle} days"
+                avarageCycleView.setTextColor(textColor)
+                nextPeriodStartDate.setTextColor(textColor)
+                nextPeriodIn.setTextColor(textColor)
+                nextFertilePhase.setTextColor(textColor)
+                chancesOfPregnancy.setTextColor(textColor)
+                cycleVariation.setTextColor(textColor)
+                periodLengthView.setTextColor(textColor)
+                longestCycleView.setTextColor(textColor)
             }
         }
         setPeriodInCalendar.setOnClickListener {
@@ -100,10 +118,14 @@ class PeriodTracker {
                 customView(R.layout.add_mentro_informations)
                 cornerRadius(literalDp = 20f)
 
-                val menstrualLastPeriodStartDate = view.findViewById<TextInputEditText>(R.id.menstrualLastPeriodStartDate)
-                val menstrualLastPeriodEndDate = view.findViewById<TextInputEditText>(R.id.menstrualLastPeriodEndDate)
-                val menstrualCycleLength = view.findViewById<TextInputEditText>(R.id.menstrualCycleLength)
-                val menstrualLongestCycle = view.findViewById<TextInputEditText>(R.id.menstrualLongestCycle)
+                val menstrualLastPeriodStartDate =
+                    view.findViewById<TextInputEditText>(R.id.menstrualLastPeriodStartDate)
+                val menstrualLastPeriodEndDate =
+                    view.findViewById<TextInputEditText>(R.id.menstrualLastPeriodEndDate)
+                val menstrualCycleLength =
+                    view.findViewById<TextInputEditText>(R.id.menstrualCycleLength)
+                val menstrualLongestCycle =
+                    view.findViewById<TextInputEditText>(R.id.menstrualLongestCycle)
                 val menstrualAddNotes = view.findViewById<TextInputEditText>(R.id.menstrualAddNotes)
 
                 menstrualLastPeriodStartDate.setOnClickListener {
@@ -187,4 +209,25 @@ class PeriodTracker {
             }
         }
     }
+}
+
+private fun showCycleStartPopup(context: Context, auth: FirebaseAuth, db: FirebaseDatabase) {
+    val builder = MaterialAlertDialogBuilder(context) // 'this' should be your activity or context
+    builder.setTitle("Menstrual Cycle Started")
+    builder.setMessage("Your menstrual cycle has started. Update the start date?")
+
+    builder.setPositiveButton("Yes") { _, _ ->
+        val currentDateMillis = Calendar.getInstance().timeInMillis
+        val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.US)
+        val updatedStartDate = dateFormat.format(currentDateMillis)
+
+        updateFirebaseDatabase("previous_start_date", updatedStartDate, auth, db)
+    }
+
+    builder.setNegativeButton("No") { _, _ ->
+        // User clicked "No," do nothing or handle as needed
+    }
+
+    val dialog = builder.create()
+    dialog.show()
 }

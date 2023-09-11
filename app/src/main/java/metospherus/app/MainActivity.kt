@@ -11,7 +11,6 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
@@ -29,7 +28,6 @@ import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.database.profile_data.Profiles
 import metospherus.app.databinding.ActivityMainBinding
@@ -37,11 +35,10 @@ import metospherus.app.modules.GeneralReminders
 import metospherus.app.modules.GeneralTemplate
 import metospherus.app.services.ScheduledRemindersManager
 import metospherus.app.update.UpdateUtil
-import metospherus.app.utilities.Constructor
 import metospherus.app.utilities.Constructor.insertOrUpdateUserProfile
+import metospherus.app.utilities.FirebaseConfig.retrieveRealtimeDatabase
+import metospherus.app.utilities.FirebaseConfig.retrieveRealtimeDatabaseOnListener
 import metospherus.app.utilities.MoluccusToast
-import java.text.SimpleDateFormat
-import java.util.Locale
 import kotlin.system.exitProcess
 
 class MainActivity : AppCompatActivity() {
@@ -56,6 +53,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var preferences: SharedPreferences
     private var profileDetailsListener: ValueEventListener? = null
     private val PERMISSIONS_REQUEST_CODE = 1001
+
+    private lateinit var metospherus: MoluccusToast
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -69,28 +68,33 @@ class MainActivity : AppCompatActivity() {
         navController = findNavController(R.id.nav_host_fragment_content_main)
         appBarConfiguration = AppBarConfiguration(navController.graph)
 
+        metospherus = MoluccusToast(this@MainActivity)
+
         checkUpdate()
         startProfileDetailsListener()
         publicModulesForAllUsers()
     }
+
     override fun onResume() {
         super.onResume()
         initializeMedicalIntakeAlertSystem()
         startProfileDetailsListener()
         publicModulesForAllUsers()
     }
+
     override fun onPause() {
         super.onPause()
         initializeMedicalIntakeAlertSystem()
         stopProfileDetailsListener()
         publicModulesForAllUsers()
     }
+
     private fun publicModulesForAllUsers() {
         auth.currentUser?.let { currentUser ->
             val patientGeneralModulesDB = db.getReference("medicalmodules").child("modules")
-            val patientPrivateGeneralModulesDB =
-                db.getReference("medicalmodules").child("userspecific").child("modules")
-                    .child(currentUser.uid)
+            val patientPrivateGeneralModulesDB = db.getReference("medicalmodules")
+                .child("userspecific").child("modules")
+                .child(currentUser.uid)
 
             patientGeneralModulesDB.addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -118,25 +122,19 @@ class MainActivity : AppCompatActivity() {
             })
         }
     }
+
     private fun startProfileDetailsListener() {
         if (profileDetailsListener == null) {
             auth.currentUser?.uid?.let { userId ->
-                val profileDetails = db.getReference("participants").child(userId)
-                profileDetails.keepSynced(true)
-                profileDetailsListener = profileDetails.addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
+                retrieveRealtimeDatabaseOnListener(db, "participants/$userId", this,
+                    onDataChange = { snapshot ->
                         val userProfile = snapshot.getValue(Profiles::class.java)
                         if (userProfile != null) {
                             CoroutineScope(Dispatchers.Default).launch {
                                 insertOrUpdateUserProfile(userProfile, appDatabase)
                             }
                         }
-                    }
-
-                    override fun onCancelled(error: DatabaseError) {
-                        MoluccusToast(this@MainActivity).showError("Cancelled because ${error.message}")
-                    }
-                })
+                    })
             }
         }
     }
@@ -144,21 +142,18 @@ class MainActivity : AppCompatActivity() {
     private fun stopProfileDetailsListener() {
         profileDetailsListener?.let { listener ->
             auth.currentUser?.uid?.let { userId ->
-                val profileDetails = db.getReference("participants").child(userId)
-                profileDetails.removeEventListener(listener)
+                retrieveRealtimeDatabase(db, "participants/$userId").removeEventListener(listener)
             }
             profileDetailsListener = null
         }
     }
+
     private fun initializeMedicalIntakeAlertSystem() {
         auth.currentUser?.let { currentUser ->
-            val schedulingReferences = db.getReference("medicalmodules")
-                .child("userspecific")
-                .child("medicineIntake")
-                .child(currentUser.uid)
-            schedulingReferences.keepSynced(true)
-            val valueEventListener = object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
+            retrieveRealtimeDatabaseOnListener(db,
+                "medicalmodules/userspecific/medicineIntake/${currentUser.uid}",
+                context = this,
+                onDataChange = { snapshot ->
                     val scheduledReminders = mutableListOf<GeneralReminders>()
                     for (snapshotSchedule in snapshot.children) {
                         val schTime = snapshotSchedule.child("medicineTime").getValue(String::class.java)
@@ -173,15 +168,10 @@ class MainActivity : AppCompatActivity() {
                     ScheduledRemindersManager(this@MainActivity).scheduleNotifications(
                         scheduledReminders
                     )
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    MoluccusToast(this@MainActivity).showError("Cancelled ${error.message}")
-                }
-            }
-            schedulingReferences.addValueEventListener(valueEventListener)
+                })
         }
     }
+
     @SuppressLint("InlinedApi")
     override fun onStart() {
         super.onStart()
@@ -220,49 +210,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
     override fun onStop() {
         super.onStop()
-        when {
-            auth.currentUser != null -> {
-                val usrDb = db.getReference("participants").child(auth.currentUser!!.uid)
-                usrDb.keepSynced(true)
-
-                usrDb.addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        when {
-                            !dataSnapshot.hasChild("userId") -> {
-                                // initCompleteUserProfile(usrDb)
-                            }
-
-                            else -> {
-                                val startTimestamp = System.currentTimeMillis() / 1000 // Get current timestamp in seconds
-                                val dateFormat = SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault())
-                                val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
-
-                                val exitDate = dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
-                                val exitTime = timeFormat.format(startTimestamp * 1000) // Convert to milliseconds
-                                val activeStatus = mapOf(
-                                    "generalSystemInformation" to mapOf(
-                                        "activeLogStatus" to false,
-                                        "activeTimeStatus" to "$exitTime - $exitDate",
-                                    )
-                                )
-                                usrDb.updateChildren(activeStatus)
-                            }
-                        }
-                    }
-
-                    override fun onCancelled(databaseError: DatabaseError) {
-                        // Handle the error if needed.
-                    }
-                })
-            }
-
-            else -> {
-                // do nothing
-            }
-        }
+        // TODO: Remove
     }
+
     @Deprecated("Deprecated in Java")
     override fun onRequestPermissionsResult(
         requestCode: Int,

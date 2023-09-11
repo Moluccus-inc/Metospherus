@@ -21,7 +21,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import metospherus.app.adaptors.SearchAdaptor
 import metospherus.app.database.localhost.AppDatabase
-import metospherus.app.utilities.Constructor.generateRandomIdWithDateTime
 import metospherus.app.utilities.Constructor.insertOrUpdateUserCompanionShip
 import kotlin.random.Random
 

@@ -1,9 +1,22 @@
 package metospherus.app.utilities
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlarmManager
+import android.app.usage.UsageStats
+import android.app.usage.UsageStatsManager
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Address
+import android.location.Geocoder
+import android.location.Location
+import android.location.LocationManager
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.requestPermissions
+import androidx.lifecycle.LiveData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import metospherus.app.database.localhost.AppDatabase
@@ -11,28 +24,13 @@ import metospherus.app.database.profile_data.Profiles
 import metospherus.app.modules.GeneralBrainResponse
 import metospherus.app.modules.GeneralMenstrualCycle
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.random.Random
 
 object Constructor {
-    const val EXTRA_NOTIFICATION_ACTION = "extra_notification_action"
-    const val ACTION_TAKEN = "action_taken"
-    const val ACTION_NOT_YET = "action_not_yet"
     const val CHANNEL_ID = "channel_id"
-    const val REQUEST_CODE = 170
-
-    fun visibilityHelper(visibility: Boolean): Int {
-        return when {
-            visibility -> {
-                View.VISIBLE
-            }
-            else -> {
-                View.GONE
-            }
-        }
-    }
-
     fun View.show() {
         visibility = View.VISIBLE
     }
@@ -69,47 +67,103 @@ object Constructor {
     suspend fun getCompanionShipFromLocalDatabase(appDatabase: AppDatabase): GeneralBrainResponse? {
         return appDatabase.generalBrainResponse().getUserCompanionShip()
     }
-    fun generateRandomIdWithDateTime(): String {
-        val currentTimeMillis = System.currentTimeMillis()
-        val random = Random.nextLong()
-        val combinedId = currentTimeMillis + random
-        val sdf = SimpleDateFormat("dd MMM, yyyy - hh:mm a", Locale.ENGLISH)
-        return sdf.format(Date(combinedId))
+
+    // Function to get the user's country based on their coordinates
+    private fun getUserCountry(context: Context, latitude: Double, longitude: Double): String? {
+        val geocoder = Geocoder(context)
+        val addresses: List<Address>? = geocoder.getFromLocation(latitude, longitude, 1)
+        return addresses?.firstOrNull()?.countryName
     }
 
-    fun parseTimestampFromString(dateTimeString: String): Long? {
-        try {
-            val timestampString = dateTimeString.split(" - ")[0] // Extract the timestamp part
-            return timestampString.toLong()
-        } catch (e: NumberFormatException) {
-            // Handle the case where parsing fails
-            e.printStackTrace()
-        }
-        return null
+    // Function to get the approximate location (e.g., "Uganda", "Kenya") based on coordinates
+    fun getApproximateLocation(context: Context, latitude: Double, longitude: Double): String? {
+        val country = getUserCountry(context, latitude, longitude)
+        return country?.takeIf { it.isNotEmpty() }
     }
 
-    fun convertTimeToMilliseconds(time: String): Long {
-        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
-        val date = sdf.parse(time)
-        val calendar = java.util.Calendar.getInstance()
-        date?.let {
-            calendar.time = it
-            calendar.set(java.util.Calendar.SECOND, 0)
-            calendar.set(java.util.Calendar.MILLISECOND, 0)
-        }
-        return calendar.timeInMillis
-    }
-
-    fun getAlarmInterval(dateLayout: String): Long {
-        return when (dateLayout) {
-            "Day" -> AlarmManager.INTERVAL_DAY
-            "Week" -> AlarmManager.INTERVAL_DAY * 7
-            "Month" -> AlarmManager.INTERVAL_DAY * 30 // Adjust as needed
-            else -> AlarmManager.INTERVAL_DAY
+    // Function to get the user's live location using the LocationManager
+    /**
+     * Get the user's location using the LocationManager
+     * @param getLiveLocation
+     * val liveLocation = LocationUtils.getLiveLocation(context)
+     * if (liveLocation != null) {
+     *     // Now you have the live location (latitude and longitude) to work with
+     * }
+     */
+    @SuppressLint("MissingPermission")
+    fun getLiveLocation(context: Context): Any? {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val criteria = android.location.Criteria()
+        criteria.accuracy = android.location.Criteria.ACCURACY_FINE
+        val provider = locationManager.getBestProvider(criteria, true)
+        return provider?.let {
+            locationManager.getLastKnownLocation(it)
         }
     }
+    // val approximateLocation = LocationUtils.getApproximateLocation(context, latitude, longitude)
+    // Now you can use approximateLocation for your purposes
+    // val userCountry = LocationUtils.getUserCountry(context, latitude, longitude)
+    // Now you can use userCountry for your purposes
+    // val liveLocation = LocationUtils.getLiveLocation(context)
+    // if (liveLocation != null) {
+        // Now you have the live location (latitude and longitude) to work with
+    // }
 
-    fun getGeneralLocationArea() {
 
+
+    // Function to get app usage statistics for a specific time range
+    private fun getAppUsageStats(
+        context: Context,
+        startTime: Long,
+        endTime: Long
+    ): List<UsageStats> {
+        val usageStatsManager =
+            context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+
+        return usageStatsManager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY,
+            startTime,
+            endTime
+        )
     }
+
+    // Function to get daily app usage statistics
+    fun getDailyAppUsageStats(context: Context): List<UsageStats> {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        val startTime = calendar.timeInMillis
+        val endTime = System.currentTimeMillis()
+
+        return getAppUsageStats(context, startTime, endTime)
+    }
+
+    // Function to get weekly app usage statistics
+    fun getWeeklyAppUsageStats(context: Context): List<UsageStats> {
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, -7) // 7 days ago
+        val startTime = calendar.timeInMillis
+        val endTime = System.currentTimeMillis()
+
+        return getAppUsageStats(context, startTime, endTime)
+    }
+
+    /**
+     * Function to get monthly app usage statistics
+     * @param context
+     */
+    fun getMonthlyAppUsageStats(context: Context): List<UsageStats> {
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.MONTH, -1) // 1 month ago
+        val startTime = calendar.timeInMillis
+        val endTime = System.currentTimeMillis()
+
+        return getAppUsageStats(context, startTime, endTime)
+    }
+    // val dailyUsageStats = AppUsageTracker.getDailyAppUsageStats(context)
+    // val weeklyUsageStats = AppUsageTracker.getWeeklyAppUsageStats(context)
+    // val monthlyUsageStats = AppUsageTracker.getMonthlyAppUsageStats(context)
+
+
 }

@@ -120,20 +120,21 @@ class ProfileFragment : Fragment() {
             auth.currentUser?.uid?.let { userId ->
                 val profileDetails = db.getReference("participants").child(userId)
                 profileDetails.keepSynced(true)
-                profileDetailsListener = profileDetails.addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        val userProfile = snapshot.getValue(Profiles::class.java)
-                        if (userProfile != null) {
-                            CoroutineScope(Dispatchers.Default).launch {
-                                Constructor.insertOrUpdateUserProfile(userProfile, appDatabase)
+                profileDetailsListener =
+                    profileDetails.addValueEventListener(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            val userProfile = snapshot.getValue(Profiles::class.java)
+                            if (userProfile != null) {
+                                CoroutineScope(Dispatchers.Default).launch {
+                                    Constructor.insertOrUpdateUserProfile(userProfile, appDatabase)
+                                }
                             }
                         }
-                    }
 
-                    override fun onCancelled(error: DatabaseError) {
-                        MoluccusToast(requireContext()).showError("Cancelled because ${error.message}")
-                    }
-                })
+                        override fun onCancelled(error: DatabaseError) {
+                            MoluccusToast(requireContext()).showError("Cancelled because ${error.message}")
+                        }
+                    })
             }
         }
     }
@@ -150,27 +151,38 @@ class ProfileFragment : Fragment() {
 
     private fun initProfileDetailsIfNeeded() {
         CoroutineScope(Dispatchers.Main).launch {
-            val userPatient = getUserProfilesFromDatabase(appDatabase)
-            if (userPatient != null) {
+            val livePatientDetails = getUserProfilesFromDatabase(appDatabase)
+            livePatientDetails?.let { userPatient ->
                 binding.name.text = userPatient.generalDescription.usrPreferedName ?: "Unknown"
-                binding.handle.text = userPatient.generalDescription.usrDistinguishedHandle ?: "Unknown"
-                binding.address.text = userPatient.generalDescription.physicalAddress ?: "Unknown Address"
-                binding.phoneNumber.text = userPatient.generalDescription.usrPrimaryPhone ?: "Unknown"
+                binding.handle.text =
+                    userPatient.generalDescription.usrDistinguishedHandle ?: "Unknown"
+                binding.address.text =
+                    userPatient.generalDescription.physicalAddress ?: "Unknown Address"
+                binding.phoneNumber.text =
+                    userPatient.generalDescription.usrPrimaryPhone ?: "Unknown"
                 binding.accountTypes.text = userPatient.accountType ?: "Unknown Type"
-                binding.email.text = userPatient.generalDescription.usrPrimaryEmail ?: "Unknown@email.com"
+                binding.email.text =
+                    userPatient.generalDescription.usrPrimaryEmail ?: "Unknown@email.com"
                 binding.dob.text = userPatient.generalDescription.usrDateOfBirth ?: "Unknown"
-                binding.identifier.text = userPatient.generalDatabaseInformation.userGeneralIdentificationNumber ?: "Unknown"
+                binding.identifier.text =
+                    userPatient.generalDatabaseInformation.userGeneralIdentificationNumber
+                        ?: "Unknown"
 
-                binding.profileWeightTv.text = userPatient.generalHealthInformation.weightRecord ?: "Unknown"
-                binding.profileAllergiesTv.text = userPatient.generalHealthInformation.allergiesRecord ?: "Unknown"
-                binding.bloodGroupTv.text = userPatient.generalHealthInformation.bloodGroupRecord ?: "Unknown"
-                binding.physicalHeightTv.text = userPatient.generalHealthInformation.heightRecord ?: "Unknown"
+                binding.profileWeightTv.text =
+                    userPatient.generalHealthInformation.weightRecord ?: "Unknown"
+                binding.profileAllergiesTv.text =
+                    userPatient.generalHealthInformation.allergiesRecord ?: "Unknown"
+                binding.bloodGroupTv.text =
+                    userPatient.generalHealthInformation.bloodGroupRecord ?: "Unknown"
+                binding.physicalHeightTv.text =
+                    userPatient.generalHealthInformation.heightRecord ?: "Unknown"
 
                 Glide.with(requireContext())
                     .load(userPatient.avatar)
                     .placeholder(R.drawable.holder)
                     .into(binding.avatar)
             }
+
         }
     }
 
@@ -184,17 +196,23 @@ class ProfileFragment : Fragment() {
 
             val closeBottomSheetProfile = view.findViewById<ImageView>(R.id.CloseBottomSheetProfile)
             val preferredNameInput = view.findViewById<TextInputEditText>(R.id.preferredNameInput)
-            val genderIndentityInput = view.findViewById<TextInputEditText>(R.id.genderIndentityInput)
-            val primaryLocationInput = view.findViewById<TextInputEditText>(R.id.primaryLocationInput)
+            val genderIndentityInput =
+                view.findViewById<TextInputEditText>(R.id.genderIndentityInput)
+            val primaryLocationInput =
+                view.findViewById<TextInputEditText>(R.id.primaryLocationInput)
             val phoneNumberInput = view.findViewById<TextInputEditText>(R.id.phoneNumberInput)
 
             val fullLegalNameInput = view.findViewById<TextInputEditText>(R.id.fullLegalNameInput)
             val emailAddressInput = view.findViewById<TextInputEditText>(R.id.emailAddressInput)
 
-            val profileAllergiesTextEdit = view.findViewById<TextInputEditText>(R.id.profileAllergiesTextEdit)
-            val profileBloodGroupTextEdit = view.findViewById<TextInputEditText>(R.id.profileBloodGroupTextEdit)
-            val profileHeightTextEdit = view.findViewById<TextInputEditText>(R.id.profileHeightTextEdit)
-            val profileWeightTextEdit = view.findViewById<TextInputEditText>(R.id.profileWeightTextEdit)
+            val profileAllergiesTextEdit =
+                view.findViewById<TextInputEditText>(R.id.profileAllergiesTextEdit)
+            val profileBloodGroupTextEdit =
+                view.findViewById<TextInputEditText>(R.id.profileBloodGroupTextEdit)
+            val profileHeightTextEdit =
+                view.findViewById<TextInputEditText>(R.id.profileHeightTextEdit)
+            val profileWeightTextEdit =
+                view.findViewById<TextInputEditText>(R.id.profileWeightTextEdit)
 
             val dateOfBirthInput = view.findViewById<TextInputEditText>(R.id.dateOfBirthInput)
 
@@ -318,7 +336,10 @@ class ProfileFragment : Fragment() {
                         val dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
                         val formattedDate = dateFormat.format(selectedCalendar.time)
 
-                        updateFirebaseDatabase("generalDescription/usrDateOfBirth", formattedDate.toString())
+                        updateFirebaseDatabase(
+                            "generalDescription/usrDateOfBirth",
+                            formattedDate.toString()
+                        )
                         dateOfBirthInput.setText(formattedDate)
                     }
 
@@ -329,8 +350,8 @@ class ProfileFragment : Fragment() {
 
             onShow {
                 lifecycleScope.launch {
-                    val userPatient = getUserProfilesFromDatabase(appDatabase)
-                    if (userPatient != null) {
+                    val livePatientDetails = getUserProfilesFromDatabase(appDatabase)
+                    livePatientDetails?.let { userPatient ->
                         preferredNameInput.setText(userPatient.generalDescription.usrPreferedName)
                         genderIndentityInput.setText(userPatient.generalHealthInformation.genderIdRecord)
                         primaryLocationInput.setText(userPatient.generalDescription.physicalAddress)

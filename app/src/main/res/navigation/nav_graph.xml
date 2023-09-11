@@ -11,7 +11,7 @@
         tools:layout="@layout/fragment_home">
 
         <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
+            android:id="@+id/action_to_settings"
             app:destination="@id/SettingsFragment" />
         <action
             android:id="@+id/action_to_profile"
@@ -28,10 +28,10 @@
         android:id="@+id/SettingsFragment"
         android:name="metospherus.app.fragments.SettingsFragment"
         android:label="Settings"
-        tools:layout="@layout/fragment_second">
+        tools:layout="@layout/fragment_settings">
 
         <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
+            android:id="@+id/action_to_home_from_settings"
             app:destination="@id/HomeFragment" />
     </fragment>
 
