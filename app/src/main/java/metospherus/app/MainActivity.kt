@@ -90,36 +90,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun publicModulesForAllUsers() {
-        auth.currentUser?.let { currentUser ->
-            val patientGeneralModulesDB = db.getReference("medicalmodules").child("modules")
-            val patientPrivateGeneralModulesDB = db.getReference("medicalmodules")
-                .child("userspecific").child("modules")
-                .child(currentUser.uid)
-
-            patientGeneralModulesDB.addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
+        auth.currentUser?.uid.let { currentUser ->
+            retrieveRealtimeDatabaseOnListener(
+                db,
+                "medicalmodules/modules",
+                this,
+                onDataChange = { snapshot ->
                     for (dataSnapshot in snapshot.children) {
                         val key = dataSnapshot.key
                         if (key != null) {
-                            patientPrivateGeneralModulesDB.child(key)
-                                .addListenerForSingleValueEvent(object : ValueEventListener {
-                                    override fun onDataChange(dataSnapshotPrivate: DataSnapshot) {
-                                        if (!dataSnapshotPrivate.exists()) {
-                                            val modulesData =
-                                                dataSnapshot.getValue(GeneralTemplate::class.java)
-                                            patientPrivateGeneralModulesDB.child(key)
-                                                .setValue(modulesData)
-                                        }
+                            retrieveRealtimeDatabaseOnListener(
+                                db,
+                                "medicalmodules/userspecific/modules/$currentUser/$key",
+                                this,
+                                onDataChange = { dataSnapshotPrivate ->
+                                    if (!dataSnapshotPrivate.exists()) {
+                                        val modulesData = dataSnapshot.getValue(GeneralTemplate::class.java)
+                                        dataSnapshotPrivate.ref.child(currentUser.toString()).setValue(modulesData)
                                     }
-
-                                    override fun onCancelled(error: DatabaseError) {}
                                 })
                         }
                     }
-                }
-
-                override fun onCancelled(error: DatabaseError) {}
-            })
+                })
         }
     }
 
@@ -156,9 +148,12 @@ class MainActivity : AppCompatActivity() {
                 onDataChange = { snapshot ->
                     val scheduledReminders = mutableListOf<GeneralReminders>()
                     for (snapshotSchedule in snapshot.children) {
-                        val schTime = snapshotSchedule.child("medicineTime").getValue(String::class.java)
-                        val schDate = snapshotSchedule.child("medicineDate").getValue(String::class.java)
-                        val schTitle = snapshotSchedule.child("medicineName").getValue(String::class.java)
+                        val schTime =
+                            snapshotSchedule.child("medicineTime").getValue(String::class.java)
+                        val schDate =
+                            snapshotSchedule.child("medicineDate").getValue(String::class.java)
+                        val schTitle =
+                            snapshotSchedule.child("medicineName").getValue(String::class.java)
 
                         if (!schTime.isNullOrEmpty() && !schDate.isNullOrEmpty() && !schTitle.isNullOrEmpty()) {
                             val scheduledList = GeneralReminders(schTime, schDate, schTitle)

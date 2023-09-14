@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/profileLayout"
     android:background="@drawable/bottomsheet_design"
     android:orientation="vertical"
     android:scrollbars="none">
@@ -138,6 +139,24 @@
                         android:layout_height="wrap_content"
                         android:inputType="text"
                         android:minLines="1" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:hint="Country">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/currentCountryInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:autofillHints="postalAddress"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:inputType="none"
+                        android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout

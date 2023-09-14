@@ -1,20 +1,16 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="Base.Theme.Metospherus" parent="Theme.Material3.Light.NoActionBar">
-        <item name="android:windowSplashScreenBackground" tools:ignore="NewApi">?android:windowBackground</item>
-        <item name="android:windowSplashScreenAnimatedIcon" tools:ignore="NewApi">@drawable/splash_logo</item>
+        <item name="android:windowSplashScreenBackground" tools:ignore="NewApi">
+            ?android:windowBackground
+        </item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:ignore="NewApi">
+            @drawable/splash_logo
+        </item>
         <item name="android:windowSplashScreenAnimationDuration" tools:ignore="NewApi">1000</item>
         <item name="android:windowSplashScreenBehavior" tools:ignore="NewApi">icon_preferred</item>
+        <item name="md_background_color">?android:windowBackground</item>
     </style>
 
     <style name="Theme.Metospherus" parent="Base.Theme.Metospherus" />
-
-    <style name="Theme.Metospherus.AppWidgetContainerParent" parent="Theme.Material3.DynamicColors.DayNight">
-        <item name="appWidgetRadius">16dp</item>
-        <item name="appWidgetInnerRadius">8dp</item>
-    </style>
-
-    <style name="Theme.Metospherus.AppWidgetContainer" parent="Theme.Metospherus.AppWidgetContainerParent">
-        <item name="appWidgetPadding">16dp</item>
-    </style>
 </resources>

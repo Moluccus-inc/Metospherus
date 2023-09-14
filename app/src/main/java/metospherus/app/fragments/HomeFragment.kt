@@ -31,6 +31,7 @@ import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.bottomsheets.setPeekHeight
+import com.afollestad.materialdialogs.callbacks.onDismiss
 import com.afollestad.materialdialogs.callbacks.onPreShow
 import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
@@ -335,7 +336,7 @@ class HomeFragment : Fragment() {
             val usersEmail = view.findViewById<TextInputEditText>(R.id.usersEmail)
             val usersEmailLayout = view.findViewById<TextInputLayout>(R.id.usersEmailLayout)
 
-            onShow {
+            onPreShow {
                 val displayMetrics = windowContext.resources.displayMetrics
                 val dialogWidth =
                     displayMetrics.widthPixels - (2 * windowContext.resources.getDimensionPixelSize(
@@ -486,12 +487,22 @@ class HomeFragment : Fragment() {
         mainAdapter.setData(notLoggedIn)
     }
 
-    private fun initProfileSheetIfNeeded(userPatient: Profiles) {
+    private fun initProfileSheetIfNeeded(usrPatient: Profiles) {
         MaterialDialog(requireContext()).show {
             customView(R.layout.profiletools_layout)
             cornerRadius(20f)
             cancelOnTouchOutside(false)
 
+            val profileDetails = MutableLiveData<Profiles>()
+            onPreShow {
+                val displayMetrics = windowContext.resources.displayMetrics
+                val dialogWidth = displayMetrics.widthPixels - (2 * windowContext.resources.getDimensionPixelSize(
+                    R.dimen.dialog_margin_horizontal
+                ))
+                window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
+
+                profileDetails.postValue(usrPatient)
+            }
             val profileActionLayout = view.findViewById<ImageView>(R.id.profileActionLayout)
             val shareInformation = view.findViewById<ImageView>(R.id.shareInformation)
             val closeHolder = view.findViewById<ImageView>(R.id.closeHolder)
@@ -502,52 +513,50 @@ class HomeFragment : Fragment() {
             val profileType = view.findViewById<TextView>(R.id.profileType)
             val profileHandler = view.findViewById<TextView>(R.id.profileHandler)
 
-            onPreShow {
+            profileDetails.observeForever { userPatient ->
                 prefName.text = userPatient.generalDescription.usrPreferedName
                 profileType.text = userPatient.accountType
                 profileHandler.text = userPatient.handle
-            }
-            Glide.with(requireContext())
-                .load(userPatient.avatar)
-                .placeholder(R.drawable.holder)
-                .into(profileImage)
 
-            profileActionLayout.setOnClickListener {
-                when (userPatient.accountType?.lowercase(Locale.ROOT)) {
-                    "patient" -> {
-                        findNavController().navigate(R.id.action_to_profile)
-                        dismiss()
-                    }
+                Glide.with(requireContext())
+                    .load(userPatient.avatar)
+                    .placeholder(R.drawable.holder)
+                    .into(profileImage)
 
-                    "doctor", "nurse" -> {
-                        findNavController().navigate(R.id.action_medical_profile)
-                        dismiss()
-                    }
+                profileActionLayout.setOnClickListener {
+                    when (userPatient.accountType?.lowercase(Locale.ROOT)) {
+                        "patient" -> {
+                            findNavController().navigate(R.id.action_to_profile)
+                            dismiss()
+                        }
 
-                    else -> {
-                        MoluccusToast(context).showInformation("Your Account Type is under development!!")
+                        "doctor", "nurse" -> {
+                            findNavController().navigate(R.id.action_medical_profile)
+                            dismiss()
+                        }
+
+                        else -> {
+                            MoluccusToast(context).showInformation("Your Account Type is under development!!")
+                        }
                     }
+                }
+
+                shareInformation.setOnClickListener {
+                }
+
+                settingActionLayout.setOnClickListener {
+                    dismiss()
+                    findNavController().navigate(R.id.action_to_settings)
+                }
+
+                closeHolder.setOnClickListener {
+                    dismiss()
+
                 }
             }
 
-            shareInformation.setOnClickListener {
-            }
-
-            settingActionLayout.setOnClickListener {
-                dismiss()
-                findNavController().navigate(R.id.action_to_settings)
-            }
-
-            closeHolder.setOnClickListener {
-                dismiss()
-            }
-            onShow {
-                val displayMetrics = windowContext.resources.displayMetrics
-                val dialogWidth =
-                    displayMetrics.widthPixels - (2 * windowContext.resources.getDimensionPixelSize(
-                        R.dimen.dialog_margin_horizontal
-                    ))
-                window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
+            onDismiss {
+                profileDetails.observeForever {}
             }
         }
     }
@@ -587,7 +596,7 @@ class HomeFragment : Fragment() {
                         }
                     }
 
-                    onShow {
+                    onPreShow {
                         val displayMetrics = windowContext.resources.displayMetrics
                         val dialogWidth =
                             displayMetrics.widthPixels - (2 * windowContext.resources.getDimensionPixelSize(

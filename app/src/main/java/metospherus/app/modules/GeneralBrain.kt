@@ -116,9 +116,7 @@ object GeneralBrain {
         val appVer = sharedPreferences.getString("api_key", "")!!
         val discussServiceClient = initializeDiscussServiceClient(appVer)
         discussServiceClient.use { discussionService ->
-            val messageContent =
-                discussionService.generateMessage(request).candidatesList.lastOrNull()
-
+            val messageContent = discussionService.generateMessage(request).candidatesList.lastOrNull()
             searchRecyclerView.loadSkeleton {
                 val customShimmer = Shimmer.AlphaHighlightBuilder()
                     .setDirection(Shimmer.Direction.TOP_TO_BOTTOM)

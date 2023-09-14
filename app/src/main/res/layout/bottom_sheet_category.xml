@@ -38,4 +38,9 @@
         android:id="@+id/medicalProfessional"
         android:visibility="gone"
         layout="@layout/medical_professionals_layout"/>
+
+    <include
+        android:id="@+id/medicalPharmacyCategory"
+        android:visibility="gone"
+        layout="@layout/medical_general_pharmacy"/>
 </LinearLayout>

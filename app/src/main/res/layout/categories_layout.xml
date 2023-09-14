@@ -5,11 +5,12 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:id="@+id/containerHolders"
+    android:clickable="true"
     app:cardCornerRadius="30dp"
     android:layout_gravity="center"
     android:hapticFeedbackEnabled="true"
-    android:layout_margin="5dp">
-
+    android:layout_margin="5dp"
+    android:focusable="true">
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -25,6 +26,7 @@
             android:layout_height="30dp"
             android:layout_gravity="center"
             android:gravity="center"
+            android:clickable="false"
             android:src="@drawable/medical_documents" />
 
         <TextView

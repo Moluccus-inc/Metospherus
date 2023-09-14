@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/medicalPharmacyCategory"
     android:orientation="vertical">
-
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/searchLayout"
         style="@style/Widget.Material3.CardView.Elevated"
@@ -14,38 +13,30 @@
         android:layout_margin="10dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/searchDocuments"
+            android:id="@+id/searchMedicineByNameOfDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
             android:maxLines="1"
-            android:drawablePadding="15dp"
+            android:drawablePadding="12dp"
             android:background="@android:color/transparent"
             android:drawableStart="@drawable/round_search"
-            android:hint="Search for Medical Documents..."
-            android:padding="12dp" />
+            android:hint="Search for Medicine..."
+            android:padding="15dp" />
     </com.google.android.material.card.MaterialCardView>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/searchLayout"
-        android:orientation="vertical">
-
-        <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp">
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:orientation="vertical">
-
+            android:layout_height="match_parent">
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewDocuments"
+                android:id="@+id/pharmacyMedicineRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-                app:spanCount="2"
-                tools:itemCount="5"
-                tools:listitem="@layout/medical_document_cards" />
-        </androidx.appcompat.widget.LinearLayoutCompat>
+                app:layoutManager="androidx.recyclerview.widget.StaggeredGridLayoutManager"/>
+        </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-</RelativeLayout>
+</LinearLayout>

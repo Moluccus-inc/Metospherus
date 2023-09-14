@@ -38,7 +38,8 @@ data class Profiles(
         val usrPrimaryPhone: String? = null,
         val usrDateOfBirth: String? = null,
         val usrDistinguishedHandle: String? = null,
-        val physicalAddress: String?= null
+        val physicalAddress: String?= null,
+        val countryLocation: String? = null,
     )
     data class GeneralHealthInformation(
         val heightRecord: String? = null,

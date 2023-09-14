@@ -7,6 +7,7 @@ import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
@@ -16,6 +17,7 @@ import android.os.Looper
 import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.requestPermissions
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -30,6 +32,7 @@ import java.util.Locale
 import kotlin.random.Random
 
 object Constructor {
+    const val METOSPHERUS_API = "https://metospherus.vercel.app/api"
     const val CHANNEL_ID = "channel_id"
     fun View.show() {
         visibility = View.VISIBLE
@@ -66,6 +69,12 @@ object Constructor {
     }
     suspend fun getCompanionShipFromLocalDatabase(appDatabase: AppDatabase): GeneralBrainResponse? {
         return appDatabase.generalBrainResponse().getUserCompanionShip()
+    }
+
+    fun checkLocationPermission(context: Context): Boolean {
+        val permission = Manifest.permission.ACCESS_FINE_LOCATION
+        val granted = PackageManager.PERMISSION_GRANTED
+        return ContextCompat.checkSelfPermission(context, permission) == granted
     }
 
     // Function to get the user's country based on their coordinates
@@ -164,6 +173,8 @@ object Constructor {
     // val dailyUsageStats = AppUsageTracker.getDailyAppUsageStats(context)
     // val weeklyUsageStats = AppUsageTracker.getWeeklyAppUsageStats(context)
     // val monthlyUsageStats = AppUsageTracker.getMonthlyAppUsageStats(context)
-
-
+    fun dpToPx(dp: Int): Int {
+        val scale = Resources.getSystem().displayMetrics.density
+        return (dp * scale).toInt()
+    }
 }

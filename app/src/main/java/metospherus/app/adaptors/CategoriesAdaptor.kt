@@ -41,7 +41,7 @@ class CategoriesAdaptor(
                 .centerCrop()
                 .into(itemView.findViewById(R.id.imageCategory))
 
-            itemView.findViewById<ImageView>(R.id.imageCategory).setOnClickListener {
+            itemView.findViewById<MaterialCardView>(R.id.containerHolders).setOnClickListener {
                 CoroutineScope(Dispatchers.Main).launch {
                     val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
                     if (userPatient != null) {

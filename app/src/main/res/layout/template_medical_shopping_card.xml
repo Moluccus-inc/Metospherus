@@ -18,8 +18,9 @@
             android:layout_height="wrap_content">
 
             <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/medicinePlaceholderImage"
                 android:layout_width="match_parent"
-                android:layout_height="100dp"
+                android:layout_height="120dp"
                 android:scaleType="centerCrop"
                 app:srcCompat="@drawable/holder" />
         </com.google.android.material.card.MaterialCardView>
@@ -31,6 +32,7 @@
             android:padding="5dp">
 
             <TextView
+                android:id="@+id/medicinePlaceHolderName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:hint="Medicine Name"
@@ -38,8 +40,10 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/medicinePlaceHolderDescription"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:maxLines="3"
                 android:hint="Medicine short description and about it"
                 android:textSize="11sp" />
 
@@ -76,6 +80,7 @@
                 android:weightSum="2">
 
                 <com.google.android.material.chip.Chip
+                    android:id="@+id/medicinePlaceHolderPrice"
                     style="@style/Widget.MaterialComponents.Chip.Action"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -85,6 +90,7 @@
                     android:textSize="11sp" />
 
                 <com.google.android.material.chip.Chip
+                    android:id="@+id/medicinePlaceHolderUnit"
                     style="@style/Widget.MaterialComponents.Chip.Action"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

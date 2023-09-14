@@ -29,6 +29,7 @@ import koleton.api.loadSkeleton
 import metospherus.app.R
 import metospherus.app.adaptors.MedicalDocumentsAdaptor
 import metospherus.app.adaptors.MedicalProfessionsAdaptor
+import metospherus.app.categories.PharmacyCategory
 import metospherus.app.database.profile_data.Profiles
 import metospherus.app.modules.GeneralCategory
 import metospherus.app.modules.GeneralDocuments
@@ -71,6 +72,7 @@ class InitializeBottomSheetCategories {
                     medicalDocuments.hide()
                     patientsStatistics.hide()
                     medicalProfessional.hide()
+                    PharmacyCategory().intitializePharmacy(this, db)
                 }
                 "Patients" -> {
                     patientsStatistics.show()

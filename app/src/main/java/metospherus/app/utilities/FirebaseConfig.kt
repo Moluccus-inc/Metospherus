@@ -1,7 +1,6 @@
 package metospherus.app.utilities
 
 import android.content.Context
-import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -44,6 +43,21 @@ object FirebaseConfig {
                     MoluccusToast(context = context).showError(error.details)
                 }
             })
+        }
+    }
+
+    /**
+     * Update Realtime Database
+     * @param db firebase database
+     * @param path firebase path
+     * @param value firebase value
+     */
+    fun updateRealtimeDatabaseData(
+        db: FirebaseDatabase, path: String,
+        value : String
+    ) {
+        if (value.isNotEmpty()) {
+            db.getReference(path).setValue(value)
         }
     }
 }

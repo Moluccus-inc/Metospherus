@@ -3,6 +3,7 @@ package metospherus.app.fragments
 import android.annotation.SuppressLint
 import android.location.Address
 import android.location.Geocoder
+import android.location.Location
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -15,6 +16,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,6 +32,11 @@ import com.afollestad.materialdialogs.callbacks.onDismiss
 import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
 import com.bumptech.glide.Glide
+import com.facebook.shimmer.Shimmer
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textfield.TextInputEditText
@@ -41,6 +48,8 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
+import koleton.api.hideSkeleton
+import koleton.api.loadSkeleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,6 +59,8 @@ import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.database.profile_data.Profiles
 import metospherus.app.databinding.FragmentProfileBinding
 import metospherus.app.utilities.Constructor
+import metospherus.app.utilities.Constructor.checkLocationPermission
+import metospherus.app.utilities.Constructor.getApproximateLocation
 import metospherus.app.utilities.Constructor.getUserProfilesFromDatabase
 import metospherus.app.utilities.MoluccusToast
 import java.text.SimpleDateFormat
@@ -64,6 +75,7 @@ class ProfileFragment : Fragment() {
     private lateinit var db: FirebaseDatabase
     private lateinit var appDatabase: AppDatabase
 
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var profileDetailsListener: ValueEventListener? = null
     private lateinit var imgAvatar: ShapeableImageView
     private val pickMedia =
@@ -102,6 +114,10 @@ class ProfileFragment : Fragment() {
 
         initProfileDetailsIfNeeded()
         startProfileDetailsListener()
+
+        if (checkLocationPermission(requireContext())) {
+            requestLocationUpdates()
+        }
     }
 
     override fun onResume() {
@@ -154,28 +170,18 @@ class ProfileFragment : Fragment() {
             val livePatientDetails = getUserProfilesFromDatabase(appDatabase)
             livePatientDetails?.let { userPatient ->
                 binding.name.text = userPatient.generalDescription.usrPreferedName ?: "Unknown"
-                binding.handle.text =
-                    userPatient.generalDescription.usrDistinguishedHandle ?: "Unknown"
-                binding.address.text =
-                    userPatient.generalDescription.physicalAddress ?: "Unknown Address"
-                binding.phoneNumber.text =
-                    userPatient.generalDescription.usrPrimaryPhone ?: "Unknown"
+                binding.handle.text = userPatient.generalDescription.usrDistinguishedHandle ?: "Unknown"
+                binding.address.text = userPatient.generalDescription.physicalAddress ?: "Unknown Address"
+                binding.phoneNumber.text = userPatient.generalDescription.usrPrimaryPhone ?: "Unknown"
                 binding.accountTypes.text = userPatient.accountType ?: "Unknown Type"
-                binding.email.text =
-                    userPatient.generalDescription.usrPrimaryEmail ?: "Unknown@email.com"
+                binding.email.text = userPatient.generalDescription.usrPrimaryEmail ?: "Unknown@email.com"
                 binding.dob.text = userPatient.generalDescription.usrDateOfBirth ?: "Unknown"
-                binding.identifier.text =
-                    userPatient.generalDatabaseInformation.userGeneralIdentificationNumber
-                        ?: "Unknown"
+                binding.identifier.text = userPatient.generalDatabaseInformation.userGeneralIdentificationNumber ?: "Unknown"
 
-                binding.profileWeightTv.text =
-                    userPatient.generalHealthInformation.weightRecord ?: "Unknown"
-                binding.profileAllergiesTv.text =
-                    userPatient.generalHealthInformation.allergiesRecord ?: "Unknown"
-                binding.bloodGroupTv.text =
-                    userPatient.generalHealthInformation.bloodGroupRecord ?: "Unknown"
-                binding.physicalHeightTv.text =
-                    userPatient.generalHealthInformation.heightRecord ?: "Unknown"
+                binding.profileWeightTv.text = userPatient.generalHealthInformation.weightRecord ?: "Unknown"
+                binding.profileAllergiesTv.text = userPatient.generalHealthInformation.allergiesRecord ?: "Unknown"
+                binding.bloodGroupTv.text = userPatient.generalHealthInformation.bloodGroupRecord ?: "Unknown"
+                binding.physicalHeightTv.text = userPatient.generalHealthInformation.heightRecord ?: "Unknown"
 
                 Glide.with(requireContext())
                     .load(userPatient.avatar)
@@ -194,25 +200,21 @@ class ProfileFragment : Fragment() {
             cancelOnTouchOutside(false)
             cornerRadius(20f)
 
+            val profileLayout = view.findViewById<LinearLayout>(R.id.profileLayout)
             val closeBottomSheetProfile = view.findViewById<ImageView>(R.id.CloseBottomSheetProfile)
             val preferredNameInput = view.findViewById<TextInputEditText>(R.id.preferredNameInput)
-            val genderIndentityInput =
-                view.findViewById<TextInputEditText>(R.id.genderIndentityInput)
-            val primaryLocationInput =
-                view.findViewById<TextInputEditText>(R.id.primaryLocationInput)
+            val genderIndentityInput = view.findViewById<TextInputEditText>(R.id.genderIndentityInput)
+            val primaryLocationInput = view.findViewById<TextInputEditText>(R.id.primaryLocationInput)
+            val currentCountryInput = view.findViewById<TextInputEditText>(R.id.currentCountryInput)
             val phoneNumberInput = view.findViewById<TextInputEditText>(R.id.phoneNumberInput)
 
             val fullLegalNameInput = view.findViewById<TextInputEditText>(R.id.fullLegalNameInput)
             val emailAddressInput = view.findViewById<TextInputEditText>(R.id.emailAddressInput)
 
-            val profileAllergiesTextEdit =
-                view.findViewById<TextInputEditText>(R.id.profileAllergiesTextEdit)
-            val profileBloodGroupTextEdit =
-                view.findViewById<TextInputEditText>(R.id.profileBloodGroupTextEdit)
-            val profileHeightTextEdit =
-                view.findViewById<TextInputEditText>(R.id.profileHeightTextEdit)
-            val profileWeightTextEdit =
-                view.findViewById<TextInputEditText>(R.id.profileWeightTextEdit)
+            val profileAllergiesTextEdit = view.findViewById<TextInputEditText>(R.id.profileAllergiesTextEdit)
+            val profileBloodGroupTextEdit = view.findViewById<TextInputEditText>(R.id.profileBloodGroupTextEdit)
+            val profileHeightTextEdit = view.findViewById<TextInputEditText>(R.id.profileHeightTextEdit)
+            val profileWeightTextEdit = view.findViewById<TextInputEditText>(R.id.profileWeightTextEdit)
 
             val dateOfBirthInput = view.findViewById<TextInputEditText>(R.id.dateOfBirthInput)
 
@@ -225,6 +227,7 @@ class ProfileFragment : Fragment() {
             primaryLocationInput.setOnClickListener {
                 fetchAddress(primaryLocationInput)
             }
+
             phoneNumberInput.doAfterTextChanged { p0 ->
                 p0.let {
                     if (it?.isNotEmpty() == true) {
@@ -349,9 +352,17 @@ class ProfileFragment : Fragment() {
             }
 
             onShow {
+                profileLayout.loadSkeleton {
+                    val customShimmer = Shimmer.AlphaHighlightBuilder()
+                        .setDirection(Shimmer.Direction.TOP_TO_BOTTOM)
+                        .build()
+                    shimmer(customShimmer)
+                }
                 lifecycleScope.launch {
                     val livePatientDetails = getUserProfilesFromDatabase(appDatabase)
                     livePatientDetails?.let { userPatient ->
+                        profileLayout.hideSkeleton()
+
                         preferredNameInput.setText(userPatient.generalDescription.usrPreferedName)
                         genderIndentityInput.setText(userPatient.generalHealthInformation.genderIdRecord)
                         primaryLocationInput.setText(userPatient.generalDescription.physicalAddress)
@@ -359,6 +370,7 @@ class ProfileFragment : Fragment() {
                         fullLegalNameInput.setText(userPatient.generalDescription.usrFullLegalName)
                         emailAddressInput.setText(userPatient.generalDescription.usrPrimaryEmail)
                         dateOfBirthInput.setText(userPatient.generalDescription.usrDateOfBirth)
+                        currentCountryInput.setText(userPatient.generalDescription.countryLocation)
 
                         profileWeightTextEdit.setText(userPatient.generalHealthInformation.weightRecord)
                         profileAllergiesTextEdit.setText(userPatient.generalHealthInformation.allergiesRecord)
@@ -431,6 +443,30 @@ class ProfileFragment : Fragment() {
                 MoluccusToast(requireContext()).showInformation("Upload Error ${exception.message.toString()}")
             }
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun requestLocationUpdates() {
+        val locationRequest = LocationRequest.create()
+            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+            .setInterval(1000) // Update interval in milliseconds
+
+        val locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                locationResult.lastLocation?.let { location: Location ->
+                    val latitude = location.latitude
+                    val longitude = location.longitude
+                    val userCountry = getApproximateLocation(requireContext(), latitude, longitude)
+                    updateFirebaseDatabase("generalDescription/countryLocation", userCountry.toString())
+                }
+            }
+        }
+
+        fusedLocationClient.requestLocationUpdates(
+            locationRequest,
+            locationCallback,
+            null // Use the main Looper
+        )
     }
 
     override fun onDestroyView() {
