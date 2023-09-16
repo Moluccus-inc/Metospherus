@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:layout_margin="10dp"
+    android:layout_margin="2dp"
     app:cardCornerRadius="20dp">
 
     <LinearLayout
@@ -15,14 +15,33 @@
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="120dp">
 
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/medicinePlaceholderImage"
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="120dp"
-                android:scaleType="centerCrop"
-                app:srcCompat="@drawable/holder" />
+                android:layout_height="match_parent">
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/medicinePlaceholderImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    app:srcCompat="@drawable/holder" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_margin="10dp"
+                    app:strokeColor="@android:color/transparent"
+                    app:cardBackgroundColor="@android:color/transparent"
+                    app:cardCornerRadius="100dp">
+                    <ImageView
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:src="@drawable/round_local_pharmacy"/>
+                </com.google.android.material.card.MaterialCardView>
+            </RelativeLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <LinearLayout
@@ -36,7 +55,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:hint="Medicine Name"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -47,6 +66,15 @@
                 android:hint="Medicine short description and about it"
                 android:textSize="11sp" />
 
+            <TextView
+                android:id="@+id/countryLocation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:drawableStart="@drawable/round_local_pharmacy"
+                android:text="Uganda"/>
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -65,6 +93,7 @@
                     android:stepSize="0.0" />
 
                 <TextView
+                    android:id="@+id/viewCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"

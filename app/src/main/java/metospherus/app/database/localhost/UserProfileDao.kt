@@ -14,4 +14,7 @@ interface UserProfileDao {
 
     @Query("SELECT * FROM USER_PROFILE LIMIT 1")
     suspend fun getUserPatient(): Profiles?
+
+    @Query("DELETE FROM USER_PROFILE")
+    fun deleteAllUserData()
 }

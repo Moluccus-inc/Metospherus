@@ -14,4 +14,7 @@ interface MenstrualCyclesDao {
 
     @Query("SELECT * FROM MENSTRUAL_CYCLES LIMIT 1")
     suspend fun getMenstrualCycles(): GeneralMenstrualCycle?
+
+    @Query("DELETE FROM MENSTRUAL_CYCLES")
+    fun deleteAllUserData()
 }

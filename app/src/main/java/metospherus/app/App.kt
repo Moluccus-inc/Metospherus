@@ -1,8 +1,10 @@
 package metospherus.app
 
 import android.app.Application
+import android.content.res.Configuration
 import android.os.Looper
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.google.android.material.color.DynamicColors
@@ -35,6 +37,18 @@ class App : Application() {
         FirebaseApp.initializeApp(applicationContext)
         FirebaseDatabase.getInstance().setPersistenceEnabled(true)
         DynamicColors.applyToActivitiesIfAvailable(this)
+        when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
+            Configuration.UI_MODE_NIGHT_YES -> {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            }
+            Configuration.UI_MODE_NIGHT_NO -> {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            }
+            else -> {
+                DynamicColors.applyToActivitiesIfAvailable(this)
+               // AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+            }
+        }
 
         val sharedPreferences =  PreferenceManager.getDefaultSharedPreferences(this)
         applicationScope = CoroutineScope(SupervisorJob())
@@ -72,7 +86,7 @@ class App : Application() {
 
     companion object {
         private const val TAG = "App"
-        private lateinit var applicationScope: CoroutineScope
+        lateinit var applicationScope: CoroutineScope
         lateinit var instance: App
     }
 }

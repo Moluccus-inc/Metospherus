@@ -5,12 +5,11 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
+import androidx.navigation.NavController
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,6 +22,7 @@ import metospherus.app.utilities.InitializeBottomSheetCategories
 class CategoriesAdaptor(
     private val context: Context,
     private val appDatabase: AppDatabase,
+    private val findNavController: NavController,
 ) : RecyclerView.Adapter<CategoriesAdaptor.ViewHolder>() {
     private val serviceList: MutableList<GeneralCategory> = mutableListOf()
 
@@ -47,7 +47,8 @@ class CategoriesAdaptor(
                     if (userPatient != null) {
                         InitializeBottomSheetCategories().initializeBottomSheetCategories(
                             context,
-                            cart
+                            cart,
+                            findNavController
                         )
                     }
                 }

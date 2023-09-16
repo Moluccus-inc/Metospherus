@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">Metospherus</string>
+    <string name="app_name">Pherus</string>
+    <string name="description">Pherus comprehensive Medical System that redefines healthcare by integrating all aspects of the medical sector, from patients and doctors to nurses, pharmacies, shipping, communication, intensive care, donations, and more.</string>
     <string name="action_settings">Settings</string>
 
     <string name="searchbar_hint">Search, Inquire, Learn, Ask…</string>
@@ -7,27 +8,24 @@
     <string name="prefix">Per </string>
     <string name="suffix"> Pills</string>
 
-    <string name="consent_notice">By continuing to create an account on Metospherus Comprehensive Medical System, you agree to our <b><a href="/">terms of service</a></b> and <b><a href="/">privacy policy</a></b> as our client.</string>
     <string name="metospherus_handle">/metospherus</string>
 
-    <string name="legal_discloser_notice">Your full legal name will never be shown to anyone with the exception for legal purposes , inconsideration to your health or for monitory payments made with you consent.</string>
-    <string name="protection_discloser_notice">This helps protect your account from Hackers and some who has been granted access to your account from accessing some personal information without your permission, the action with your consent takes your fingerprint mapping and is used on your account encase you need to access or encryption to date to only you.</string>
-    <string name="already_updating">Currently Updating</string>
+  <string name="already_updating">Currently Updating</string>
     <string name="network_error">Network Error</string>
-    <string name="you_are_in_latest_version">Your Metospherus Client Is UpToDate</string>
+    <string name="you_are_in_latest_version">Your Pherus Client Is UpToDate</string>
     <string name="couldnt_find_apk">Couldn\'t Find Update</string>
     <string name="downloading_update">Downloading Update</string>
     <string name="warning">Warning</string>
-    <string name="request_permission_desc">This app needs this permission on your device</string>
     <string name="exit_app">exit</string>
     <string name="ok">OK</string>
-    <string name="appwidget_text">EXAMPLE</string>
-    <string name="configure">Configure</string>
-    <string name="add_widget">Add widget</string>
+
+    <string name="request_permission_desc">This app needs this permission on your device</string>
 
     <string name="app_widget_description">This is an app widget description</string>
+    <string name="consent_notice">By continuing to create an account on Metospherus Comprehensive Medical System, you agree to our <b><a href="/">terms of service</a></b> and <b><a href="/">privacy policy</a></b> as our client.</string>
     <string name="app_default_module_url">https://images.unsplash.com/photo-1584017911766-d451b3d0e843?ixlib=rb-4.0.3&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&amp;auto=format</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="title_activity_chat_ui">ChatUi</string>
+    <string name="legal_discloser_notice">Your full legal name will never be shown to anyone with the exception for legal purposes , inconsideration to your health or for monitory payments made with you consent.</string>
+    <string name="protection_discloser_notice">This helps protect your account from Hackers and some who has been granted access to your account from accessing some personal information without your permission, the action with your consent takes your fingerprint mapping and is used on your account encase you need to access or encryption to date to only you.</string>
+    <string name="suggestion_git_action_message"><![CDATA[Use symbols like # for Headers ## for titles > for quoting, ``` code ``` [ x ] for making or list etc all most all html5 tags are usable here]]></string>
+    <string name="default_notification_channel_id">pherus_messages</string>
 </resources>

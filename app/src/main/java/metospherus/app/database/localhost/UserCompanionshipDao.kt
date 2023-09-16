@@ -13,4 +13,7 @@ interface UserCompanionshipDao {
 
     @Query("SELECT * FROM USER_COMPANIONSHIP LIMIT 1")
     suspend fun getUserCompanionShip(): GeneralBrainResponse?
+
+    @Query("DELETE FROM USER_COMPANIONSHIP")
+    fun deleteAllUserData()
 }

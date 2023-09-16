@@ -29,8 +29,10 @@ class NotificationHelper(private val context: Context) {
             PendingIntent.FLAG_IMMUTABLE
         )
         val icon = BitmapFactory.decodeResource(context.resources, R.drawable.medicine_reminder)
+
+        val vibrationPattern = longArrayOf(1000, 1000, 1000, 1000, 1000, 1000, 0)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.icon)
+            .setSmallIcon(R.drawable.ic_notifications)
             .setLargeIcon(icon)
             .setContentTitle(title)
             .setContentText(message)
@@ -42,7 +44,7 @@ class NotificationHelper(private val context: Context) {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setAutoCancel(true)
-            .setVibrate(longArrayOf(1000, 1000, 1000, 1000, 1000))
+            .setVibrate(vibrationPattern) // Set custom vibration pattern
             .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
             .build()
 

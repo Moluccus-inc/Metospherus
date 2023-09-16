@@ -6,25 +6,37 @@ import android.app.AlarmManager
 import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import androidx.annotation.WorkerThread
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.database.profile_data.Profiles
 import metospherus.app.modules.GeneralBrainResponse
 import metospherus.app.modules.GeneralMenstrualCycle
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.apache.http.client.methods.RequestBuilder.post
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -32,6 +44,11 @@ import java.util.Locale
 import kotlin.random.Random
 
 object Constructor {
+    const val ACTION_REPLY = "metospherus.app.ACTION_REPLY"
+    const val KEY_REPLY = "key_reply"
+
+    const val ONESIGNAL_APP_ID = "2a609f7b-bd4d-4905-91b0-4cd60e03d37c"
+    const val METOSPHERUS_DISCUSSION_TOKEN = "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"
     const val METOSPHERUS_API = "https://metospherus.vercel.app/api"
     const val CHANNEL_ID = "channel_id"
     fun View.show() {
@@ -176,5 +193,64 @@ object Constructor {
     fun dpToPx(dp: Int): Int {
         val scale = Resources.getSystem().displayMetrics.density
         return (dp * scale).toInt()
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    fun createBugReport(
+        title: String,
+        body: String,
+        context: Context,
+        task: (Boolean) -> Unit
+    ) {
+        GlobalScope.launch(Dispatchers.IO) {
+            val apiUrl = "https://api.github.com/repos/Moluccus-inc/Metospherus/discussions"
+            val authToken = METOSPHERUS_DISCUSSION_TOKEN // Replace with your GitHub personal access token
+
+            val json = JSONObject()
+            json.put("title", title)
+            json.put("body", body)
+            json.put("category", "ideas") // Specify the category as "ideas" or the appropriate category
+
+            val mediaType = "application/json; charset=utf-8".toMediaType()
+            val requestBody = json.toString().toRequestBody(mediaType)
+
+            val request = Request.Builder()
+                .url(apiUrl)
+                .addHeader("Accept", "application/vnd.github.v3+json")
+                .addHeader("Authorization", "token $authToken")
+                .post(requestBody)
+                .build()
+
+            val client = OkHttpClient()
+            val response = client.newCall(request).execute()
+
+            val isSuccess = response.isSuccessful
+            GlobalScope.launch(Dispatchers.Main) {
+                if (isSuccess) {
+                    task(true)
+                    MoluccusToast(context = context).showInformation("Discussion created successfully")
+                } else {
+                    task(false)
+                    MoluccusToast(context = context).showError("Failed to create discussion. Status code: ${response.code}")
+                    MoluccusToast(context = context).showError("Response: ${response.body?.string()}")
+                }
+            }
+        }
+    }
+
+    @SuppressLint("QueryPermissionsNeeded")
+    fun sendEmail(subject: String, body: String, recipientEmail: String, context: Context) {
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("mailto:")
+            putExtra(Intent.EXTRA_EMAIL, arrayOf(recipientEmail))
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+            putExtra(Intent.EXTRA_TEXT, body)
+        }
+
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(intent)
+        } else {
+            // Handle case where no email client is available
+        }
     }
 }

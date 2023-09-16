@@ -11,28 +11,30 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
 import androidx.preference.PreferenceManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.database.profile_data.Profiles
 import metospherus.app.databinding.ActivityMainBinding
+import metospherus.app.fragments.ChatsFragment
 import metospherus.app.modules.GeneralReminders
 import metospherus.app.modules.GeneralTemplate
+import metospherus.app.services.NetworkHandler
 import metospherus.app.services.ScheduledRemindersManager
 import metospherus.app.update.UpdateUtil
 import metospherus.app.utilities.Constructor.insertOrUpdateUserProfile
@@ -40,6 +42,7 @@ import metospherus.app.utilities.FirebaseConfig.retrieveRealtimeDatabase
 import metospherus.app.utilities.FirebaseConfig.retrieveRealtimeDatabaseOnListener
 import metospherus.app.utilities.MoluccusToast
 import kotlin.system.exitProcess
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -63,6 +66,7 @@ class MainActivity : AppCompatActivity() {
         auth = Firebase.auth
         db = FirebaseDatabase.getInstance()
         appDatabase = AppDatabase.getInstance(this)
+        val networkHandler = NetworkHandler(this)
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this)
         navController = findNavController(R.id.nav_host_fragment_content_main)
@@ -73,6 +77,25 @@ class MainActivity : AppCompatActivity() {
         checkUpdate()
         startProfileDetailsListener()
         publicModulesForAllUsers()
+
+        if (auth.currentUser?.uid != null) {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    db.getReference("MedicalMessenger/FcmTokens/${auth.currentUser?.uid}").setValue(task.result.toString())
+                } else {
+                    metospherus.showError("Failed to assign PnT token Reason : ${task.exception?.message}")
+                }
+            }
+        }
+
+        when {
+            networkHandler.isOnline() -> {
+                // Device is online
+            }
+            else -> {
+                // Device is offline
+            }
+        }
     }
 
     override fun onResume() {
@@ -105,8 +128,10 @@ class MainActivity : AppCompatActivity() {
                                 this,
                                 onDataChange = { dataSnapshotPrivate ->
                                     if (!dataSnapshotPrivate.exists()) {
-                                        val modulesData = dataSnapshot.getValue(GeneralTemplate::class.java)
-                                        dataSnapshotPrivate.ref.child(currentUser.toString()).setValue(modulesData)
+                                        val modulesData =
+                                            dataSnapshot.getValue(GeneralTemplate::class.java)
+                                        dataSnapshotPrivate.ref.child(currentUser.toString())
+                                            .setValue(modulesData)
                                     }
                                 })
                         }
@@ -177,13 +202,9 @@ class MainActivity : AppCompatActivity() {
                     Manifest.permission.CAMERA,
                     Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.INTERNET,
                     Manifest.permission.POST_NOTIFICATIONS,
                     Manifest.permission.WAKE_LOCK,
                     Manifest.permission.VIBRATE,
-                    Manifest.permission.INSTALL_PACKAGES,
-                    Manifest.permission.REQUEST_INSTALL_PACKAGES,
-                    Manifest.permission.MANAGE_DEVICE_POLICY_INSTALL_UNKNOWN_SOURCES
                 ).toString()
             ) != PackageManager.PERMISSION_GRANTED -> {
                 requestPermissions(
@@ -191,13 +212,9 @@ class MainActivity : AppCompatActivity() {
                         Manifest.permission.CAMERA,
                         Manifest.permission.READ_EXTERNAL_STORAGE,
                         Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.INTERNET,
                         Manifest.permission.POST_NOTIFICATIONS,
                         Manifest.permission.WAKE_LOCK,
                         Manifest.permission.VIBRATE,
-                        Manifest.permission.INSTALL_PACKAGES,
-                        Manifest.permission.REQUEST_INSTALL_PACKAGES,
-                        Manifest.permission.MANAGE_DEVICE_POLICY_INSTALL_UNKNOWN_SOURCES
                     ),
                     PERMISSIONS_REQUEST_CODE
                 )
@@ -256,9 +273,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        return navController.navigateUp(appBarConfiguration)
-                || super.onSupportNavigateUp()
+    /** override fun onSupportNavigateUp(): Boolean {
+    val navController = findNavController(R.id.nav_host_fragment_content_main)
+    return navController.navigateUp(appBarConfiguration)
+    || super.onSupportNavigateUp()
     }
+     **/
 }

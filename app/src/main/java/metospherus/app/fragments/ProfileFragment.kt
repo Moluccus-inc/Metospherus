@@ -3,12 +3,9 @@ package metospherus.app.fragments
 import android.annotation.SuppressLint
 import android.location.Address
 import android.location.Geocoder
-import android.location.Location
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -28,15 +25,12 @@ import androidx.navigation.fragment.findNavController
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
-import com.afollestad.materialdialogs.callbacks.onDismiss
-import com.afollestad.materialdialogs.callbacks.onShow
+import com.afollestad.materialdialogs.callbacks.onPreShow
 import com.afollestad.materialdialogs.customview.customView
 import com.bumptech.glide.Glide
 import com.facebook.shimmer.Shimmer
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textfield.TextInputEditText
@@ -53,7 +47,6 @@ import koleton.api.loadSkeleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import metospherus.app.R
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.database.profile_data.Profiles
@@ -115,8 +108,11 @@ class ProfileFragment : Fragment() {
         initProfileDetailsIfNeeded()
         startProfileDetailsListener()
 
-        if (checkLocationPermission(requireContext())) {
+        val hasLocationPermission = checkLocationPermission(requireActivity())
+        if (hasLocationPermission) {
             requestLocationUpdates()
+        } else {
+            MoluccusToast(requireContext()).showInformation("Location permission denied")
         }
     }
 
@@ -351,7 +347,7 @@ class ProfileFragment : Fragment() {
                 true
             }
 
-            onShow {
+            onPreShow {
                 profileLayout.loadSkeleton {
                     val customShimmer = Shimmer.AlphaHighlightBuilder()
                         .setDirection(Shimmer.Direction.TOP_TO_BOTTOM)
@@ -447,26 +443,19 @@ class ProfileFragment : Fragment() {
 
     @SuppressLint("MissingPermission")
     private fun requestLocationUpdates() {
-        val locationRequest = LocationRequest.create()
-            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-            .setInterval(1000) // Update interval in milliseconds
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                val latitude = location.latitude
+                val longitude = location.longitude
 
-        val locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                locationResult.lastLocation?.let { location: Location ->
-                    val latitude = location.latitude
-                    val longitude = location.longitude
-                    val userCountry = getApproximateLocation(requireContext(), latitude, longitude)
-                    updateFirebaseDatabase("generalDescription/countryLocation", userCountry.toString())
-                }
+                println("Location $latitude $longitude")
+                val userCountry = getApproximateLocation(requireContext(), latitude, longitude)
+                updateFirebaseDatabase("generalDescription/countryLocation", userCountry.toString())
+            } else {
+                MoluccusToast(requireContext()).showError("Location UnKnown")
             }
         }
-
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            null // Use the main Looper
-        )
     }
 
     override fun onDestroyView() {

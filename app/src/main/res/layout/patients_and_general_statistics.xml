@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
         android:textSize="16sp"
-        android:text="Due to Regulation and Our patients Safety we can't show you all our patients but this section will be for statistic on the general system"/>
+        android:text="Due to Regulation and Our patients Safety we can't show you details of our patients but this section will be for statistic on the general system."/>
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -43,6 +43,7 @@
                             android:textStyle="bold"
                             android:text="Patients"/>
                         <TextView
+                            android:id="@+id/patientsCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textSize="25sp"
@@ -67,8 +68,10 @@
                             android:layout_height="wrap_content"
                             android:textSize="18sp"
                             android:textStyle="bold"
-                            android:text="Medical Professional"/>
+                            android:textAlignment="center"
+                            android:text="Medical Personals"/>
                         <TextView
+                            android:id="@+id/medicalProfessionalsCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textSize="25sp"
@@ -95,6 +98,7 @@
                             android:textStyle="bold"
                             android:text="Facilities"/>
                         <TextView
+                            android:id="@+id/facilitiesCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textSize="25sp"
@@ -102,6 +106,34 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Material3.CardView.Elevated"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:padding="10dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textStyle="bold"
+                        android:textSize="23sp"
+                        android:text="Total Participants"/>
+                    <TextView
+                        android:id="@+id/totalParticipants"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textStyle="normal"
+                        android:textSize="23sp"
+                        android:text="100"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
             
             <LinearLayout
                 android:layout_width="match_parent"

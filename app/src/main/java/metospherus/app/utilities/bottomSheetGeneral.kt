@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
+import com.afollestad.materialdialogs.callbacks.onPreShow
 import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -102,7 +103,7 @@ fun bottomSheetGeneral(
             }
         }
 
-        onShow {
+        onPreShow {
             auth.currentUser?.let { currentUser ->
                 val menstrualCyclesManager = db.getReference("medicalmodules").child("userspecific").child("menstrual").child(currentUser.uid)
                 menstrualCyclesManager.keepSynced(true)

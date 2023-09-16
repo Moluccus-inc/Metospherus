@@ -133,6 +133,7 @@
                         android:orientation="vertical">
 
                         <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/lightTheme"
                             style="@style/Widget.Material3.CardView.Elevated"
                             android:layout_width="80dp"
                             android:layout_height="80dp"
@@ -162,6 +163,7 @@
                         android:orientation="vertical">
 
                         <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/darkTheme"
                            style="@style/Widget.Material3.CardView.Elevated"
                             android:layout_width="80dp"
                             android:layout_height="80dp"
@@ -191,6 +193,7 @@
                         android:orientation="vertical">
 
                         <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/dynamicTheme"
                             style="@style/Widget.Material3.CardView.Elevated"
                             android:layout_width="80dp"
                             android:layout_height="80dp"
@@ -423,6 +426,26 @@
                             android:layout_centerInParent="true" />
                     </RelativeLayout>
                 </com.google.android.material.card.MaterialCardView>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_margin="10dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="10dp"
+                        android:text="Delete Account"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/deleteAccountButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Delete Account"/>
+                </LinearLayout>
 
             </LinearLayout>
 

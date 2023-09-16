@@ -29,6 +29,7 @@ class PharmaciesAdaptor(
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind(pharma: GeneralPharmaciesSales) {
             itemView.findViewById<TextView>(R.id.medicinePlaceHolderName).text = pharma.name
+            itemView.findViewById<TextView>(R.id.countryLocation).text = pharma.country
             itemView.findViewById<TextView>(R.id.medicinePlaceHolderDescription).text = pharma.description
             itemView.findViewById<Chip>(R.id.medicinePlaceHolderPrice).text = "${pharma.price} ${pharma.currency}"
             itemView.findViewById<Chip>(R.id.medicinePlaceHolderUnit).text = "per strip"

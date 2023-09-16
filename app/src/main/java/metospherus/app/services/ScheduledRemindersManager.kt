@@ -39,9 +39,7 @@ class ScheduledRemindersManager(
             }
 
             val delayInSeconds = TimeUnit.MILLISECONDS.toSeconds(userSelectedDateTime.timeInMillis - todayDateTime.timeInMillis)
-
             createWorkRequest(reminderTitle, delayInSeconds)
-           // println("Reminder set to $reminderTitle : $delayInSeconds")
         }
     }
 

@@ -7,39 +7,39 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.widget.addTextChangedListener
 import androidx.core.widget.doAfterTextChanged
+import androidx.navigation.NavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
+import com.afollestad.materialdialogs.callbacks.onPreShow
+import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
-import com.afollestad.materialdialogs.internal.main.DialogLayout
 import com.facebook.shimmer.Shimmer
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import koleton.api.hideSkeleton
 import koleton.api.loadSkeleton
 import metospherus.app.R
 import metospherus.app.adaptors.MedicalDocumentsAdaptor
 import metospherus.app.adaptors.MedicalProfessionsAdaptor
+import metospherus.app.categories.GeneralStatistics
 import metospherus.app.categories.PharmacyCategory
 import metospherus.app.database.profile_data.Profiles
 import metospherus.app.modules.GeneralCategory
 import metospherus.app.modules.GeneralDocuments
-import metospherus.app.utilities.Constructor.hide
 import metospherus.app.utilities.Constructor.show
+import metospherus.app.utilities.FirebaseConfig.retrieveRealtimeDatabaseOnListener
 
 class InitializeBottomSheetCategories {
     fun initializeBottomSheetCategories(
         context: Context,
         cart: GeneralCategory,
+        findNavController: NavController,
     ) {
         MaterialDialog(context, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
             customView(R.layout.bottom_sheet_category)
@@ -50,61 +50,61 @@ class InitializeBottomSheetCategories {
 
             val titleBottomSheet = view.findViewById<TextView>(R.id.titleBottomSheet)
             val closeBottomSheet = view.findViewById<ImageView>(R.id.closeBottomSheet)
-            val medicalDocuments = view.findViewById<RelativeLayout>(R.id.medicalDocuments)
-            val patientsStatistics = view.findViewById<LinearLayout>(R.id.patientsStatistics)
-            val medicalProfessional = view.findViewById<LinearLayout>(R.id.medicalProfessional)
 
             titleBottomSheet.text = cart.titleCategory
             closeBottomSheet.setOnClickListener { dismiss() }
 
-            val retrieveMedicalProfessions = db.getReference("participants")
-            retrieveMedicalProfessions.keepSynced(true)
-
-            val medicalProfessionalsAdaptor = MedicalProfessionsAdaptor(context, auth, db)
+            val medicalProfessionalsAdaptor = MedicalProfessionsAdaptor(context, auth, db, findNavController, this)
             when (cart.titleCategory) {
                 "Documents" -> {
-                    medicalDocuments.show()
-                    patientsStatistics.hide()
-                    medicalProfessional.hide()
-                    initializeDocumentsSection(context, db, auth, view)
+                    if (auth.currentUser?.uid != null) {
+                        initializeDocumentsSection(context, db, auth, this)
+                    } else {
+                        dismiss()
+                        cancel()
+                        MoluccusToast(context).showInformation("Please Login In Order To Use This Feature!!")
+                    }
                 }
+
                 "Pharmacy" -> {
-                    medicalDocuments.hide()
-                    patientsStatistics.hide()
-                    medicalProfessional.hide()
                     PharmacyCategory().intitializePharmacy(this, db)
                 }
-                "Patients" -> {
-                    patientsStatistics.show()
-                    medicalDocuments.hide()
-                    medicalProfessional.hide()
-                }
-                "Professionals" -> {
-                    medicalDocuments.hide()
-                    patientsStatistics.hide()
-                    medicalProfessional.show()
 
+                "Patients" -> {
+                    GeneralStatistics().intitializeGeneralStatistics(this, db)
+                }
+
+                "Professionals" -> {
                     initializeProfessionalsSection(
-                        context,
-                        view,
-                        retrieveMedicalProfessions,
+                        this,
+                        db,
                         medicalProfessionalsAdaptor
                     )
                 }
+                "Delivery" -> {
+                    if (auth.currentUser?.uid != null) {
+                        // todo:
+                    } else {
+                        dismiss()
+                        cancel()
+                        MoluccusToast(context).showInformation("Please Login In Order To Use This Feature!!")
+                    }
+                }
+
                 else -> {
-                    medicalDocuments.hide()
-                    patientsStatistics.hide()
-                    medicalProfessional.hide()
+                    dismiss()
                 }
             }
         }
     }
+
     private fun initializeDocumentsSection(
         context: Context,
         db: FirebaseDatabase,
         auth: FirebaseAuth,
-        view: DialogLayout
+        view: MaterialDialog
     ) {
+        view.findViewById<RelativeLayout>(R.id.medicalDocuments).show()
         val medicalRec = mutableListOf<GeneralDocuments>()
         val recyclerViewDocuments = view.findViewById<RecyclerView>(R.id.recyclerViewDocuments)
         val searchDocuments = view.findViewById<TextInputEditText>(R.id.searchDocuments)
@@ -130,7 +130,7 @@ class InitializeBottomSheetCategories {
                 }
 
                 when {
-                    matchingResults.isNullOrEmpty() -> {
+                    matchingResults.isEmpty() -> {
                         recyclerViewDocuments.loadSkeleton {
                             val customShimmer = Shimmer.AlphaHighlightBuilder()
                                 .setDirection(Shimmer.Direction.TOP_TO_BOTTOM)
@@ -150,47 +150,47 @@ class InitializeBottomSheetCategories {
                 medicalDocumentsAdaptor.setData(medicalRec)
             }
         }
-        auth.currentUser?.let { currentUser ->
-            val medicalRecordsDB = db.getReference("MedicalDocuments").child(currentUser.uid)
-            medicalRecordsDB.keepSynced(true)
-            medicalRecordsDB.addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    medicalRec.clear()
-                    for (dataSnapshot in snapshot.children) {
-                        val mdReadme = dataSnapshot.getValue(GeneralDocuments::class.java)
-                        mdReadme?.let { medicalRec.add(it) }
-                    }
-                    medicalDocumentsAdaptor.setData(medicalRec)
-                }
+        retrieveRealtimeDatabaseOnListener(
+            db,
+            "MedicalDocuments/${auth.currentUser!!.uid}",
+            context
+        ) { snapshot ->
+            medicalRec.clear()
+            for (dataSnapshot in snapshot.children) {
+                val mdReadme = dataSnapshot.getValue(GeneralDocuments::class.java)
+                mdReadme?.let { medicalRec.add(it) }
+            }
+            medicalDocumentsAdaptor.setData(medicalRec)
+        }
 
-                override fun onCancelled(error: DatabaseError) {}
-            })
-        } ?: MoluccusToast(context).showInformation("Please Login In Order To Use This Feature!!")
     }
+
     private fun initializeProfessionalsSection(
-        context: Context,
-        view: DialogLayout,
-        retrieveMedicalProfessions: DatabaseReference,
+        view: MaterialDialog,
+        db: FirebaseDatabase,
         medicalProfessionalsAdaptor: MedicalProfessionsAdaptor
     ) {
+        view.findViewById<LinearLayout>(R.id.medicalProfessional).show()
         val recyclerViewProfessionals = view.findViewById<RecyclerView>(R.id.recyclerViewProfessionals)
         val searchMedicalProfessions = view.findViewById<TextInputEditText>(R.id.searchMedicalProfessions)
         val chipGroup = view.findViewById<ChipGroup>(R.id.availableCategories)
 
-        val medicalProfessionalsArray = context.resources.getStringArray(R.array.medical_professionals)
+        val medicalProfessionalsArray = view.windowContext.resources.getStringArray(R.array.medical_professionals)
         for (profession in medicalProfessionalsArray) {
-            val chip = Chip(context)
+            val chip = Chip(view.windowContext)
             chip.text = profession
             chip.isCheckable = true
             chipGroup.addView(chip)
         }
 
-        recyclerViewProfessionals.layoutManager = GridLayoutManager(context, 2)
-        recyclerViewProfessionals.adapter = medicalProfessionalsAdaptor
+        view.onShow {
+            recyclerViewProfessionals.layoutManager = GridLayoutManager(view.windowContext, 2)
+            recyclerViewProfessionals.adapter = medicalProfessionalsAdaptor
+        }
 
-        val mdProfessionalsList = mutableListOf<Profiles>()
-        retrieveMedicalProfessions.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
+        view.onPreShow {
+            val mdProfessionalsList = mutableListOf<Profiles>()
+            retrieveRealtimeDatabaseOnListener(db, "participants", view.windowContext) { snapshot ->
                 mdProfessionalsList.clear()
                 for (snapshotItem in snapshot.children) {
                     val checkIfUserIsAccountTypeDoctor = snapshotItem.child("accountType").getValue(String::class.java)
@@ -210,6 +210,7 @@ class InitializeBottomSheetCategories {
                         it?.isNotEmpty() == true -> {
                             medicalProfessionalsAdaptor.setData(matchingResults.toMutableList())
                         }
+
                         else -> {
                             medicalProfessionalsAdaptor.setData(mdProfessionalsList)
                         }
@@ -217,10 +218,6 @@ class InitializeBottomSheetCategories {
                 }
                 medicalProfessionalsAdaptor.setData(mdProfessionalsList)
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                MoluccusToast(context).showError("Cancelled ${error.message}")
-            }
-        })
+        }
     }
 }

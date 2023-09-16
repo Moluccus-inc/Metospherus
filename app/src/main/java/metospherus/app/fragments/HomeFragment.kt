@@ -5,6 +5,7 @@ import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
+import android.os.Looper
 import android.provider.OpenableColumns
 import android.util.Log
 import android.view.LayoutInflater
@@ -14,16 +15,20 @@ import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.edit
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.preference.Preference
+import androidx.preference.PreferenceDataStore
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -33,22 +38,22 @@ import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.bottomsheets.setPeekHeight
 import com.afollestad.materialdialogs.callbacks.onDismiss
 import com.afollestad.materialdialogs.callbacks.onPreShow
-import com.afollestad.materialdialogs.callbacks.onShow
 import com.afollestad.materialdialogs.customview.customView
 import com.bumptech.glide.Glide
 import com.facebook.shimmer.Shimmer
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.search.SearchBar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 import com.google.firebase.storage.FirebaseStorage
 import koleton.api.hideSkeleton
 import koleton.api.loadSkeleton
@@ -56,8 +61,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import metospherus.app.App
+import metospherus.app.BuildConfig
 import metospherus.app.MainActivity
 import metospherus.app.R
 import metospherus.app.adaptors.CategoriesAdaptor
@@ -78,6 +86,7 @@ import metospherus.app.utilities.FirebaseConfig.retrieveRealtimeDatabaseOnListen
 import metospherus.app.utilities.MoluccusToast
 import metospherus.app.utilities.Validator.Companion.isValidEmail
 import metospherus.app.utilities.initBottomSheetsIfNeeded
+import metospherus.app.utilities.requestFeatureOrReportBugs
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -133,7 +142,7 @@ class HomeFragment : Fragment() {
         recyclerViewTracker.layoutManager = GridLayoutManager(requireContext(), 3)
 
         mainAdapter = MainAdaptor(requireContext(), lifecycleScope)
-        categoryAdapter = CategoriesAdaptor(requireContext(), appDatabase)
+        categoryAdapter = CategoriesAdaptor(requireContext(), appDatabase, findNavController())
 
         recyclerViewTracker.adapter = mainAdapter
         metospherus = MoluccusToast(requireContext())
@@ -146,7 +155,11 @@ class HomeFragment : Fragment() {
         }
 
         binding.addRemoveAvailableModules.setOnClickListener {
-            AddOrRemoveModules().addOrRemoveModules(requireContext(), db, auth)
+            if (auth.currentUser?.uid != null) {
+                AddOrRemoveModules().addOrRemoveModules(requireContext(), db, auth)
+            } else {
+                MoluccusToast(requireContext()).showInformation("Please Login In Order To Use This Feature!!")
+            }
         }
 
         var isDataLoading = false
@@ -163,6 +176,7 @@ class HomeFragment : Fragment() {
                         auth.currentUser != null -> {
                             initProfileSheetIfNeeded(profile)
                         }
+
                         else -> {
                             initBottomSheetsIfNeeded(requireContext(), requireActivity(), auth, db)
                         }
@@ -172,8 +186,8 @@ class HomeFragment : Fragment() {
                 getPermissionsTaskDB()
             }
         }
+
         setupMaterialSearchView()
-        getPermissionsTaskDB()
         startProfileDetailsListener()
     }
 
@@ -190,7 +204,9 @@ class HomeFragment : Fragment() {
     private fun startProfileDetailsListener() {
         if (profileDetailsListener == null) {
             auth.currentUser?.uid?.let { userId ->
-                retrieveRealtimeDatabaseOnListener(db, "participants/${userId}", requireContext(),
+                retrieveRealtimeDatabaseOnListener(db,
+                    "participants/${userId}",
+                    requireContext(),
                     onDataChange = { snapshot ->
                         val userProfile = snapshot.getValue(Profiles::class.java)
                         if (userProfile != null) {
@@ -206,7 +222,9 @@ class HomeFragment : Fragment() {
     private fun stopProfileDetailsListener() {
         profileDetailsListener?.let { listener ->
             auth.currentUser?.uid?.let { userId ->
-                retrieveRealtimeDatabase(db, "participants/${userId}").removeEventListener(listener)
+                retrieveRealtimeDatabase(db, "participants/${userId}").removeEventListener(
+                    listener
+                )
             }
             profileDetailsListener = null
         }
@@ -221,7 +239,8 @@ class HomeFragment : Fragment() {
                 cornerRadius(literalDp = 20f)
                 setPeekHeight(Int.MAX_VALUE)
 
-                val searchRecyclerView = view.findViewById<RecyclerView>(R.id.searchResultsAnswer)
+                val searchRecyclerView =
+                    view.findViewById<RecyclerView>(R.id.searchResultsAnswer)
                 val searchableInputEditText =
                     view.findViewById<TextInputEditText>(R.id.searchableInputEditText)
 
@@ -425,7 +444,8 @@ class HomeFragment : Fragment() {
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
                                     dismiss()
-                                    val restartIntent = Intent(context, MainActivity::class.java)
+                                    val restartIntent =
+                                        Intent(context, MainActivity::class.java)
                                     restartIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                                     context.startActivity(restartIntent)
                                     MoluccusToast(requireContext()).showSuccess("Profile updated successfully!!\uD83D\uDE0A")
@@ -496,9 +516,10 @@ class HomeFragment : Fragment() {
             val profileDetails = MutableLiveData<Profiles>()
             onPreShow {
                 val displayMetrics = windowContext.resources.displayMetrics
-                val dialogWidth = displayMetrics.widthPixels - (2 * windowContext.resources.getDimensionPixelSize(
-                    R.dimen.dialog_margin_horizontal
-                ))
+                val dialogWidth =
+                    displayMetrics.widthPixels - (2 * windowContext.resources.getDimensionPixelSize(
+                        R.dimen.dialog_margin_horizontal
+                    ))
                 window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
 
                 profileDetails.postValue(usrPatient)
@@ -508,6 +529,9 @@ class HomeFragment : Fragment() {
             val closeHolder = view.findViewById<ImageView>(R.id.closeHolder)
             val profileImage = view.findViewById<ImageView>(R.id.profileImage)
             val settingActionLayout = view.findViewById<ImageView>(R.id.settingActionLayout)
+
+            val reportBugsOrProblems =
+                view.findViewById<LinearLayout>(R.id.reportBugsOrProblems)
 
             val prefName = view.findViewById<TextView>(R.id.prefName)
             val profileType = view.findViewById<TextView>(R.id.profileType)
@@ -551,8 +575,11 @@ class HomeFragment : Fragment() {
 
                 closeHolder.setOnClickListener {
                     dismiss()
-
                 }
+            }
+
+            reportBugsOrProblems.setOnClickListener {
+                requestFeatureOrReportBugs(requireContext())
             }
 
             onDismiss {
@@ -567,7 +594,8 @@ class HomeFragment : Fragment() {
             customView(R.layout.material_bottomsheet_documents)
             cornerRadius(literalDp = 20f)
 
-            val addDocumentHolder = view.findViewById<FloatingActionButton>(R.id.addDocumentHolder)
+            val addDocumentHolder =
+                view.findViewById<FloatingActionButton>(R.id.addDocumentHolder)
             addDocumentHolder.setOnClickListener {
                 MaterialDialog(requireContext()).show {
                     customView(R.layout.add_document_medical_record)
@@ -630,7 +658,9 @@ class HomeFragment : Fragment() {
                                                 try {
                                                     if (cursor != null && cursor.moveToFirst()) {
                                                         fileName = cursor.getString(
-                                                            cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                                                            cursor.getColumnIndex(
+                                                                OpenableColumns.DISPLAY_NAME
+                                                            )
                                                         )
                                                     }
                                                 } finally {
@@ -696,7 +726,9 @@ class HomeFragment : Fragment() {
                                                     "Download URL Error",
                                                     exception.message.toString()
                                                 )
-                                                MoluccusToast(requireContext()).showInformation("Download URL Error ${exception.message.toString()}")
+                                                MoluccusToast(requireContext()).showInformation(
+                                                    "Download URL Error ${exception.message.toString()}"
+                                                )
                                             }
                                         }.addOnFailureListener { exception ->
                                             Log.e("Upload Error", exception.message.toString())

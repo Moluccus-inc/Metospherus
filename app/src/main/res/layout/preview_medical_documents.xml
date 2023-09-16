@@ -15,8 +15,10 @@
             android:layout_margin="10dp">
             <ImageView
                 android:id="@+id/closeBottomSheet"
-                android:layout_width="35dp"
-                android:layout_height="35dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
                 android:src="@drawable/round_close"/>
 
             <TextView
@@ -24,17 +26,38 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
+                android:layout_marginStart="5dp"
+                android:layout_toEndOf="@+id/closeBottomSheet"
                 android:hint="@string/app_name"
-                android:textSize="23sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <ImageView
+                android:id="@+id/editDocument"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="15dp"
+                android:layout_toStartOf="@+id/deleteDocument"
+                android:src="@drawable/round_edit" />
+
+            <ImageView
+                android:id="@+id/deleteDocument"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_marginEnd="15dp"
+                android:layout_toStartOf="@+id/shareDocument"
+                android:src="@drawable/round_delete" />
+
+            <ImageView
                 android:id="@+id/shareDocument"
-                android:layout_width="35dp"
-                android:layout_height="35dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_centerInParent="true"
-                android:src="@drawable/round_share"/>
+                android:src="@drawable/round_share" />
         </RelativeLayout>
 
         <LinearLayout
@@ -60,7 +83,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Medical Document Title"
-                    android:textSize="20sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <LinearLayout
