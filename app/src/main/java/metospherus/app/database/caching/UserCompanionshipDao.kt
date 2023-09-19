@@ -1,4 +1,4 @@
-package metospherus.app.database.localhost
+package metospherus.app.database.caching
 
 import androidx.room.Dao
 import androidx.room.Insert

@@ -8,112 +8,169 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="5dp">
 
             <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.Material3.CardView.Elevated"
                 android:layout_width="match_parent"
-                android:layout_height="180dp"
-                android:layout_margin="5dp"
-                android:layout_weight="1">
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="100dp">
 
-                <RelativeLayout
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="6">
 
-                    <com.google.android.material.card.MaterialCardView
-                        style="@style/Widget.Material3.CardView.Elevated"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_margin="5dp"
-                        android:layout_centerInParent="true">
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center">
 
-                        <ImageView
-                            android:id="@+id/uploadFileOrImage"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_gravity="center"
-                            android:src="@drawable/round_add" />
-                    </com.google.android.material.card.MaterialCardView>
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/addOrSaveDocument"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/round_save"
+                            app:fabCustomSize="45sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="18sp" />
+                    </LinearLayout>
 
-                    <com.google.android.material.imageview.ShapeableImageView
-                        android:id="@+id/imageHolder"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/medical_documents" />
-                </RelativeLayout>
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/markSelectedTextBold"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/round_bold"
+                            app:fabCustomSize="25sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/markSelectedTextItalic"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/round_italic"
+                            app:fabCustomSize="25sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/addBulletDotsTo"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/round_list"
+                            app:fabCustomSize="25sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/alignSelectedTextToTextStart"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/round_notes"
+                            app:fabCustomSize="25sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/alignSelectedTextToTextCenter"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:rotation="-90"
+                            android:src="@drawable/round_notes"
+                            app:fabCustomSize="25sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/alignSelectedTextToTextEnd"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:rotation="180"
+                            android:src="@drawable/round_notes"
+                            app:fabCustomSize="25sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="16sp" />
+                    </LinearLayout>
+
+
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/documentInputEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:hint="Medical Document Title">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/documentTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:maxLines="1" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:hint="Document Short Description">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/shortDescription"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:maxLines="1" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:hint="Medical Facility Name">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/medicalFacilityName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:maxLines="1" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:hint="Medical Notes"
-                app:counterEnabled="true"
-                app:counterMaxLength="350">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/medicalNotes"
-                    android:layout_width="match_parent"
-                    android:layout_height="150dp"
-                    android:layout_gravity="start|top"
-                    android:gravity="start|top"
-                    android:inputType="textMultiLine"
-                    android:maxLength="350"
-                    android:padding="10dp"
-                    android:scrollbars="horizontal" />
-            </com.google.android.material.textfield.TextInputLayout>
+                android:background="@android:color/transparent"
+                android:elegantTextHeight="true"
+                android:gravity="top"
+                android:hint="| Tap here to input record\n| don't for get to make the title bold"
+                android:minHeight="250dp"
+                android:padding="10dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </RelativeLayout>

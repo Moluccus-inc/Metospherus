@@ -3,10 +3,9 @@ package metospherus.app.categories
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.afollestad.materialdialogs.MaterialDialog
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.database.FirebaseDatabase
 import metospherus.app.R
-import metospherus.app.database.profile_data.Profiles
+import metospherus.app.database.profile_data.GeneralUserInformation
 import metospherus.app.utilities.Constructor.show
 import metospherus.app.utilities.FirebaseConfig.retrieveRealtimeDatabaseOnListener
 
@@ -28,7 +27,7 @@ class GeneralStatistics {
             var facilityCount = 0
             var medicalProfessionals = 0
             for (dataSnapshotValue in dataSnapShot.children) {
-                val valueReadable = dataSnapshotValue.getValue(Profiles::class.java)
+                val valueReadable = dataSnapshotValue.getValue(GeneralUserInformation::class.java)
                 val accountType = valueReadable?.accountType ?: ""
 
                 if (accountType.contains("patient", ignoreCase = true)) {

@@ -1,10 +1,8 @@
 package metospherus.app
 
 import android.app.Application
-import android.content.res.Configuration
 import android.os.Looper
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.google.android.material.color.DynamicColors
@@ -21,7 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import metospherus.app.utilities.MoluccusToast
+import okhttp3.internal.concurrent.TaskRunner
 
 class App : Application() {
     override fun onCreate() {
@@ -37,18 +35,6 @@ class App : Application() {
         FirebaseApp.initializeApp(applicationContext)
         FirebaseDatabase.getInstance().setPersistenceEnabled(true)
         DynamicColors.applyToActivitiesIfAvailable(this)
-        when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
-            Configuration.UI_MODE_NIGHT_YES -> {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            }
-            Configuration.UI_MODE_NIGHT_NO -> {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            }
-            else -> {
-                DynamicColors.applyToActivitiesIfAvailable(this)
-               // AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            }
-        }
 
         val sharedPreferences =  PreferenceManager.getDefaultSharedPreferences(this)
         applicationScope = CoroutineScope(SupervisorJob())
@@ -59,15 +45,33 @@ class App : Application() {
                     minimumFetchIntervalInSeconds = 3600
                 }
                 remoteConfig.setConfigSettingsAsync(configSettings)
-                remoteConfig.fetchAndActivate()
-                    .addOnCompleteListener {
-                        if (it.isSuccessful) {
-                            val apiKey = remoteConfig.getString("APIKEY")
-                            sharedPreferences.edit().putString("api_key", apiKey).apply()
-                        } else {
-                            MoluccusToast(this@App).showError("API KEY NOT FOUND ${it.exception?.message}")
+
+                val alreadyConfinedKeys = sharedPreferences.getString("api_key", "").toString()
+                if (alreadyConfinedKeys.isNotEmpty()) {
+                    remoteConfig.fetchAndActivate()
+                        .addOnCompleteListener {
+                            if (it.isSuccessful) {
+                                val apiKey = remoteConfig.getString("APIKEY")
+                                if (alreadyConfinedKeys == apiKey) {
+                                    // do nothing
+                                } else {
+                                    if (apiKey != null) {
+                                        sharedPreferences.edit().putString("api_key", apiKey).apply()
+                                    }
+                                }
+                            }
                         }
-                    }
+                } else {
+                    remoteConfig.fetchAndActivate()
+                        .addOnCompleteListener {
+                            if (it.isSuccessful) {
+                                val apiKey = remoteConfig.getString("APIKEY")
+                                if (apiKey != null) {
+                                    sharedPreferences.edit().putString("api_key", apiKey).apply()
+                                }
+                            }
+                        }
+                }
 
                 val appVer = sharedPreferences.getString("version", "")!!
                 if(appVer.isEmpty() || appVer != BuildConfig.VERSION_NAME){
@@ -77,7 +81,7 @@ class App : Application() {
                 }
             } catch (e: Exception){
                 Looper.prepare().runCatching {
-                    Toast.makeText(this@App, e.message, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(instance, e.message, Toast.LENGTH_SHORT).show()
                 }
                 e.printStackTrace()
             }

@@ -3,7 +3,6 @@ package metospherus.app.adaptors
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.net.Uri
 import android.text.Spannable
 import android.text.SpannableString
@@ -14,21 +13,14 @@ import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
-import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import metospherus.app.R
-import metospherus.app.database.profile_data.Profiles
 import metospherus.app.modules.GeneralMessages
-import metospherus.app.utilities.Constructor.hide
-import metospherus.app.utilities.Constructor.show
-import metospherus.app.utilities.FirebaseConfig
 
 class MessagesAdaptor(
     private val context: Context,

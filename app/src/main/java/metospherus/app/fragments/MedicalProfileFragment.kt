@@ -25,10 +25,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import metospherus.app.R
 import metospherus.app.database.localhost.AppDatabase
-import metospherus.app.database.profile_data.Profiles
+import metospherus.app.database.profile_data.GeneralUserInformation
 import metospherus.app.databinding.FragmentMedicalProfileBinding
 import metospherus.app.utilities.Constructor
-import java.util.Locale
 
 class MedicalProfileFragment : Fragment() {
     private var _binding: FragmentMedicalProfileBinding? = null
@@ -68,7 +67,7 @@ class MedicalProfileFragment : Fragment() {
         initialReturnProfileInformationIfNeeded()
     }
 
-    private fun initProfileEditingIfNeeded(userPatient: Profiles) {
+    private fun initProfileEditingIfNeeded(userPatient: GeneralUserInformation) {
         MaterialDialog(requireContext(), BottomSheet(LayoutMode.WRAP_CONTENT)).show {
             customView(R.layout.profileinstance_professionals_layout)
             cancelOnTouchOutside(false)

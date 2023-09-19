@@ -2,12 +2,19 @@ package metospherus.app.fragments
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.database.Cursor
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
-import android.os.Looper
-import android.provider.OpenableColumns
+import android.text.Editable
+import android.text.Layout
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.TextWatcher
+import android.text.style.AlignmentSpan
+import android.text.style.CharacterStyle
+import android.text.style.StyleSpan
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,18 +24,13 @@ import android.widget.AutoCompleteTextView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.edit
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.preference.Preference
-import androidx.preference.PreferenceDataStore
-import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -51,29 +53,24 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.google.firebase.remoteconfig.ktx.remoteConfig
-import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
-import com.google.firebase.storage.FirebaseStorage
+import com.google.gson.Gson
 import koleton.api.hideSkeleton
 import koleton.api.loadSkeleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import metospherus.app.App
-import metospherus.app.BuildConfig
 import metospherus.app.MainActivity
 import metospherus.app.R
 import metospherus.app.adaptors.CategoriesAdaptor
 import metospherus.app.adaptors.MainAdaptor
 import metospherus.app.adaptors.SearchAdaptor
 import metospherus.app.database.localhost.AppDatabase
-import metospherus.app.database.profile_data.Profiles
+import metospherus.app.database.profile_data.GeneralUserInformation
 import metospherus.app.databinding.FragmentHomeBinding
+import metospherus.app.modules.FormattingInfo
 import metospherus.app.modules.GeneralBrain.sendMessage
 import metospherus.app.modules.GeneralCategory
 import metospherus.app.modules.GeneralSearchResults
@@ -106,7 +103,11 @@ class HomeFragment : Fragment() {
     private lateinit var appDatabase: AppDatabase
     private lateinit var imageHolder: ImageView
 
+    private var isBold = false
+    private var isItalic = false
+
     private lateinit var metospherus: MoluccusToast
+    private lateinit var documentInputEditText: TextInputEditText
 
     private var profileDetailsListener: ValueEventListener? = null
     private val selectedImageLiveData = MutableLiveData<Uri>()
@@ -119,6 +120,7 @@ class HomeFragment : Fragment() {
             }
         }
 
+    val liveDataInput = MutableLiveData<String>()
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -162,7 +164,6 @@ class HomeFragment : Fragment() {
             }
         }
 
-        var isDataLoading = false
         CoroutineScope(Dispatchers.Main).launch {
             val userPatient = Constructor.getUserProfilesFromDatabase(appDatabase)
             userPatient?.let { profile ->
@@ -208,7 +209,7 @@ class HomeFragment : Fragment() {
                     "participants/${userId}",
                     requireContext(),
                     onDataChange = { snapshot ->
-                        val userProfile = snapshot.getValue(Profiles::class.java)
+                        val userProfile = snapshot.getValue(GeneralUserInformation::class.java)
                         if (userProfile != null) {
                             CoroutineScope(Dispatchers.Default).launch {
                                 Constructor.insertOrUpdateUserProfile(userProfile, appDatabase)
@@ -282,29 +283,9 @@ class HomeFragment : Fragment() {
                     }
                     when {
                         matchingResults.isNullOrEmpty() -> {
-                            val repos = mutableListOf(
-                                GeneralSearchResults(
-                                    "...",
-                                    "...",
-                                ),
-                                GeneralSearchResults(
-                                    "...",
-                                    "...",
-                                ),
-                                GeneralSearchResults(
-                                    "...",
-                                    "...",
-                                ),
-                            )
-                            searchAdapter.setData(repos)
-
-                            searchRecyclerView.loadSkeleton {
-                                val customShimmer = Shimmer.AlphaHighlightBuilder()
-                                    .setDirection(Shimmer.Direction.TOP_TO_BOTTOM)
-                                    .build()
-                                shimmer(customShimmer)
+                            searchRecyclerView.loadSkeleton(R.layout.search_view_layout) {
+                                itemCount(3)
                             }
-
                             searchableInputEditText.setOnEditorActionListener { _, actionId, _ ->
                                 if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
                                     sendMessage(
@@ -314,6 +295,10 @@ class HomeFragment : Fragment() {
                                         searchRecyclerView,
                                         appDatabase
                                     )
+
+                                    searchRecyclerView.loadSkeleton(R.layout.search_view_layout) {
+                                        itemCount(3)
+                                    }
                                 }
                                 true
                             }
@@ -507,13 +492,13 @@ class HomeFragment : Fragment() {
         mainAdapter.setData(notLoggedIn)
     }
 
-    private fun initProfileSheetIfNeeded(usrPatient: Profiles) {
+    private fun initProfileSheetIfNeeded(usrPatient: GeneralUserInformation) {
         MaterialDialog(requireContext()).show {
             customView(R.layout.profiletools_layout)
             cornerRadius(20f)
             cancelOnTouchOutside(false)
 
-            val profileDetails = MutableLiveData<Profiles>()
+            val profileDetails = MutableLiveData<GeneralUserInformation>()
             onPreShow {
                 val displayMetrics = windowContext.resources.displayMetrics
                 val dialogWidth =
@@ -594,156 +579,201 @@ class HomeFragment : Fragment() {
             customView(R.layout.material_bottomsheet_documents)
             cornerRadius(literalDp = 20f)
 
-            val addDocumentHolder =
-                view.findViewById<FloatingActionButton>(R.id.addDocumentHolder)
+            val addDocumentHolder = view.findViewById<FloatingActionButton>(R.id.addDocumentHolder)
             addDocumentHolder.setOnClickListener {
                 MaterialDialog(requireContext()).show {
                     customView(R.layout.add_document_medical_record)
-                    cornerRadius(literalDp = 20f)
+                    cornerRadius(literalDp = 30f)
 
-                    val documentTitle = view.findViewById<TextInputEditText>(R.id.documentTitle)
-                    val shortDescription =
-                        view.findViewById<TextInputEditText>(R.id.shortDescription)
-                    val medicalFacilityName =
-                        view.findViewById<TextInputEditText>(R.id.medicalFacilityName)
-                    val uploadFileOrImage = view.findViewById<ImageView>(R.id.uploadFileOrImage)
-                    val medicalNotes = view.findViewById<TextInputEditText>(R.id.medicalNotes)
+                    val spanInfoList = ArrayList<FormattingInfo>()
 
-                    imageHolder = view.findViewById(R.id.imageHolder)
+                    val addOrSaveDocument = view.findViewById<FloatingActionButton>(R.id.addOrSaveDocument)
+                    documentInputEditText = view.findViewById(R.id.documentInputEditText)
+                    val markSelectedTextBold = findViewById<FloatingActionButton>(R.id.markSelectedTextBold)
+                    val markSelectedTextItalic = findViewById<FloatingActionButton>(R.id.markSelectedTextItalic)
+                    val addBulletDotsTo = findViewById<FloatingActionButton>(R.id.addBulletDotsTo)
+                    val alignSelectedTextToTextStart = findViewById<FloatingActionButton>(R.id.alignSelectedTextToTextStart)
+                    val alignSelectedTextToTextCenter = findViewById<FloatingActionButton>(R.id.alignSelectedTextToTextCenter)
+                    val alignSelectedTextToTextEnd = findViewById<FloatingActionButton>(R.id.alignSelectedTextToTextEnd)
 
-                    uploadFileOrImage.setOnClickListener {
-                        imguriholder.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    markSelectedTextBold.setOnClickListener {
+                        toggleBoldStyle()
                     }
 
-                    selectedImageLiveData.observe(viewLifecycleOwner) { selectedImageUri ->
-                        if (selectedImageUri != null) {
-                            Glide.with(requireContext())
-                                .load(selectedImageUri)
-                                .centerCrop()
-                                .into(imageHolder)
+                    markSelectedTextItalic.setOnClickListener {
+                        toggleItalicStyle()
+                    }
+
+                    addBulletDotsTo.setOnClickListener {
+                        val selectionStart = documentInputEditText.selectionStart
+                        val selectionEnd = documentInputEditText.selectionEnd
+                        val bulletPoint = "\u2022 "
+                        val spannable = SpannableStringBuilder(documentInputEditText.text)
+                        spannable.insert(selectionStart, bulletPoint)
+                        documentInputEditText.text = spannable
+                        documentInputEditText.setSelection(selectionStart + bulletPoint.length)
+                    }
+
+                    alignSelectedTextToTextStart.setOnClickListener {
+                        val selectionStart = documentInputEditText.selectionStart
+                        val selectionEnd = documentInputEditText.selectionEnd
+                        val alignmentSpan = AlignmentSpan.Standard(Layout.Alignment.ALIGN_NORMAL)
+                        val spannable = SpannableStringBuilder(documentInputEditText.text)
+                        spannable.setSpan(alignmentSpan, selectionStart, selectionEnd, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
+                        documentInputEditText.text = spannable
+                    }
+
+                    alignSelectedTextToTextCenter.setOnClickListener {
+                        val selectionStart = documentInputEditText.selectionStart
+                        val selectionEnd = documentInputEditText.selectionEnd
+                        val alignmentSpan = AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER)
+                        val spannable = SpannableStringBuilder(documentInputEditText.text)
+                        spannable.setSpan(alignmentSpan, selectionStart, selectionEnd, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
+                        documentInputEditText.text = spannable
+                    }
+
+                    alignSelectedTextToTextEnd.setOnClickListener {
+                        val selectionStart = documentInputEditText.selectionStart
+                        val selectionEnd = documentInputEditText.selectionEnd
+                        val alignmentSpan = AlignmentSpan.Standard(Layout.Alignment.ALIGN_OPPOSITE)
+                        val spannable = SpannableStringBuilder(documentInputEditText.text)
+                        spannable.setSpan(alignmentSpan, selectionStart, selectionEnd, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
+                        documentInputEditText.text = spannable
+                    }
+
+                    documentInputEditText.addTextChangedListener(object : TextWatcher {
+                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                        override fun afterTextChanged(editable: Editable?) {
+                            val selectionStart = documentInputEditText.selectionStart
+                            val selectionEnd = documentInputEditText.selectionEnd
+
+                            documentInputEditText.setSelection(selectionStart, selectionEnd)
+                            liveDataInput.postValue(editable.toString())
+
+                            val spans = documentInputEditText.text?.getSpans(0, documentInputEditText.text!!.length, CharacterStyle::class.java)
+                            if (spans != null) {
+                                for (span in spans) {
+                                    if (span is StyleSpan) {
+                                        val style = span.style
+                                        val start = documentInputEditText.text?.getSpanStart(span)
+                                        val end = documentInputEditText.text?.getSpanEnd(span)
+                                        val alignment = getAlignmentForSpan(span)
+                                        val formattingInfo = FormattingInfo(start!!, end!!, style, alignment)
+                                        spanInfoList.add(formattingInfo)
+                                    }
+                                }
+                            }
+                        }
+                    })
+
+                    addOrSaveDocument.setOnClickListener {
+                        val startTimestamp = System.currentTimeMillis() / 1000
+                        val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                        val date = dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
+
+                        val firebaseData = HashMap<String, Any>()
+                        firebaseData["time"] = date.toString()
+                        firebaseData["formattedText"] = liveDataInput.value.toString()
+                        val spanInfoListJson = Gson().toJson(spanInfoList)
+                        firebaseData["formattingInfoList"] = spanInfoListJson
+                        if (firebaseData.isNotEmpty()) {
+                            db.getReference("MedicalDocuments/${auth.currentUser?.uid}").push()
+                                .setValue(firebaseData)
+                                .addOnCompleteListener {
+                                    if (it.isSuccessful) {
+                                        dismiss()
+                                    } else {
+                                        documentInputEditText.error = "Error ${it.exception?.message}"
+                                    }
+                                }
                         }
                     }
 
                     onPreShow {
                         val displayMetrics = windowContext.resources.displayMetrics
-                        val dialogWidth =
-                            displayMetrics.widthPixels - (2 * windowContext.resources.getDimensionPixelSize(
-                                R.dimen.dialog_margin_horizontal
-                            ))
-                        window?.setLayout(
-                            dialogWidth,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                        )
-                    }
+                        val dialogWidth = displayMetrics.widthPixels - (2 * windowContext.resources.getDimensionPixelSize(
+                            R.dimen.dialog_margin_horizontal
+                        ))
 
-                    positiveButton(text = "Add Medical Record") {
-                        if (documentTitle.text!!.isNotEmpty() || shortDescription.text!!.isNotEmpty() || medicalFacilityName.text!!.isNotEmpty() || medicalNotes.text!!.isNotEmpty()) {
-                            selectedImageLiveData.observe(viewLifecycleOwner) { selectedImageUri ->
-                                if (selectedImageUri != null) {
-                                    val uid = auth.currentUser?.uid
-                                    if (uid != null) {
-                                        val storageRef = FirebaseStorage.getInstance().reference
+                        // Set the dialog width
+                        val layoutParams = window?.attributes
+                        layoutParams?.width = dialogWidth
 
-                                        var fileName: String? = null
-                                        when {
-                                            selectedImageUri.scheme.equals("content") -> {
-                                                val cursor: Cursor? =
-                                                    requireContext().contentResolver.query(
-                                                        selectedImageUri,
-                                                        null,
-                                                        null,
-                                                        null,
-                                                        null
-                                                    )
-                                                try {
-                                                    if (cursor != null && cursor.moveToFirst()) {
-                                                        fileName = cursor.getString(
-                                                            cursor.getColumnIndex(
-                                                                OpenableColumns.DISPLAY_NAME
-                                                            )
-                                                        )
-                                                    }
-                                                } finally {
-                                                    cursor!!.close()
-                                                }
-                                            }
-                                        }
-                                        when (fileName) {
-                                            null -> {
-                                                fileName = selectedImageUri.path
-                                                val mark = fileName?.lastIndexOf("/")
-                                                if (mark != -1) {
-                                                    if (mark != null) {
-                                                        fileName = fileName?.substring(mark + 1)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        val extension =
-                                            fileName?.substring(fileName.lastIndexOf(".") + 1)
+                        // Set the dialog position to 5dp from the bottom
+                        layoutParams?.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                        layoutParams?.y = Constructor.dpToPx(10) // Adjust this value as needed
 
-                                        val imageRef =
-                                            storageRef.child("MedicalDocuments/$uid/${documentTitle.text!!.trim()}.$extension")
-                                        val uploadTask = imageRef.putFile(selectedImageUri)
-                                        uploadTask.addOnSuccessListener {
-                                            imageRef.downloadUrl.addOnSuccessListener { uri ->
-                                                val startTimestamp =
-                                                    System.currentTimeMillis() / 1000 // Get current timestamp in seconds
-                                                val dateFormat = SimpleDateFormat(
-                                                    "MMM dd, yyyy",
-                                                    Locale.getDefault()
-                                                )
-
-                                                val date =
-                                                    dateFormat.format(startTimestamp * 1000) // Convert to milliseconds
-
-                                                val medicalRecord = mapOf(
-                                                    "documentOwnId" to auth.currentUser!!.uid,
-                                                    "documentTitle" to documentTitle.text!!.trim()
-                                                        .toString(),
-                                                    "documentShortDescription" to shortDescription.text!!.trim()
-                                                        .toString(),
-                                                    "documentDate" to date.toString(),
-                                                    "documentSyncStatus" to "Synced",
-                                                    "documentNotes" to medicalNotes.text!!.trim()
-                                                        .toString().replace(".", ".\n\n")
-                                                        .replace("?", "?\n\n")
-                                                        .replace("\n\n ", "\n\n"),
-                                                    "documentPreview" to uri.toString()
-                                                )
-                                                db.getReference("MedicalDocuments")
-                                                    .child(auth.currentUser!!.uid)
-                                                    .push()
-                                                    .setValue(medicalRecord)
-                                                    .addOnCanceledListener {
-                                                        dismiss()
-                                                        MoluccusToast(requireContext()).showInformation(
-                                                            "SuccuessFully Added To Cloud"
-                                                        )
-                                                    }
-                                            }.addOnFailureListener { exception ->
-                                                Log.e(
-                                                    "Download URL Error",
-                                                    exception.message.toString()
-                                                )
-                                                MoluccusToast(requireContext()).showInformation(
-                                                    "Download URL Error ${exception.message.toString()}"
-                                                )
-                                            }
-                                        }.addOnFailureListener { exception ->
-                                            Log.e("Upload Error", exception.message.toString())
-                                            MoluccusToast(requireContext()).showInformation("Upload Error ${exception.message.toString()}")
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        window?.attributes = layoutParams
                     }
                 }
             }
         }
     }
 
+    private fun getAlignmentForSpan(span: CharacterStyle): Layout.Alignment? {
+        if (span is AlignmentSpan) {
+            return span.alignment
+        }
+        return null
+    }
+
+    private fun toggleBoldStyle() {
+        val selectionStart = documentInputEditText.selectionStart
+        val selectionEnd = documentInputEditText.selectionEnd
+
+        val styleSpan = StyleSpan(Typeface.BOLD)
+        val styleSpanNormal = StyleSpan(Typeface.NORMAL)
+        val spannable = SpannableStringBuilder(documentInputEditText.text)
+
+        if (isTextStyled(spannable, selectionStart, selectionEnd, Typeface.BOLD)) {
+            spannable.setSpan(styleSpanNormal, selectionStart, selectionEnd, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
+            spannable.removeSpan(styleSpan)
+            isBold = false
+            println("Removed Bold Style")
+        } else {
+            spannable.setSpan(styleSpan, selectionStart, selectionEnd, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
+            isBold = true
+            println("Applied Bold Style")
+        }
+
+        documentInputEditText.text = spannable
+        documentInputEditText.setSelection(selectionStart, selectionEnd)
+    }
+
+    private fun toggleItalicStyle() {
+        val selectionStart = documentInputEditText.selectionStart
+        val selectionEnd = documentInputEditText.selectionEnd
+
+        val styleSpan = StyleSpan(Typeface.ITALIC)
+        val styleSpanNormal = StyleSpan(Typeface.NORMAL)
+        val spannable = SpannableStringBuilder(documentInputEditText.text)
+
+        if (isTextStyled(spannable, selectionStart, selectionEnd, Typeface.ITALIC)) {
+            spannable.setSpan(styleSpanNormal, selectionStart, selectionEnd, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
+            spannable.removeSpan(styleSpan)
+            isItalic = false
+            println("Removed Italic Style")
+        } else {
+            spannable.setSpan(styleSpan, selectionStart, selectionEnd, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
+            isItalic = true
+            println("Applied Italic Style")
+        }
+
+        documentInputEditText.text = spannable
+        documentInputEditText.setSelection(selectionStart, selectionEnd)
+    }
+
+    private fun isTextStyled(editable: Editable?, start: Int, end: Int, style: Int): Boolean {
+        if (editable == null) return false
+        val spans = editable.getSpans(start, end, StyleSpan::class.java)
+        for (span in spans) {
+            if (span.style == style) {
+                return true
+            }
+        }
+        return false
+    }
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

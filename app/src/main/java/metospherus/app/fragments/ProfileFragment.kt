@@ -49,7 +49,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import metospherus.app.R
 import metospherus.app.database.localhost.AppDatabase
-import metospherus.app.database.profile_data.Profiles
+import metospherus.app.database.profile_data.GeneralUserInformation
 import metospherus.app.databinding.FragmentProfileBinding
 import metospherus.app.utilities.Constructor
 import metospherus.app.utilities.Constructor.checkLocationPermission
@@ -135,7 +135,7 @@ class ProfileFragment : Fragment() {
                 profileDetailsListener =
                     profileDetails.addValueEventListener(object : ValueEventListener {
                         override fun onDataChange(snapshot: DataSnapshot) {
-                            val userProfile = snapshot.getValue(Profiles::class.java)
+                            val userProfile = snapshot.getValue(GeneralUserInformation::class.java)
                             if (userProfile != null) {
                                 CoroutineScope(Dispatchers.Default).launch {
                                     Constructor.insertOrUpdateUserProfile(userProfile, appDatabase)

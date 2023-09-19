@@ -53,7 +53,8 @@ object FirebaseConfig {
      * @param value firebase value
      */
     fun updateRealtimeDatabaseData(
-        db: FirebaseDatabase, path: String,
+        db: FirebaseDatabase,
+        path: String,
         value : String
     ) {
         if (value.isNotEmpty()) {

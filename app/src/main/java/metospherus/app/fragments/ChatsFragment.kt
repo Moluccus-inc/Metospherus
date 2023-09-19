@@ -11,7 +11,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -26,7 +25,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.ktx.Firebase
 import metospherus.app.R
 import metospherus.app.adaptors.MessagesAdaptor
-import metospherus.app.database.profile_data.Profiles
+import metospherus.app.database.profile_data.GeneralUserInformation
 import metospherus.app.databinding.MetospherusLayoutChatBinding
 import metospherus.app.modules.FCMNotification
 import metospherus.app.modules.FCMNotificationData
@@ -111,7 +110,7 @@ class ChatsFragment : Fragment() {
             requireContext(),
             onDataChange = { valueDataSnap ->
                 if (valueDataSnap.exists()) {
-                    val profilesValue = valueDataSnap.getValue(Profiles::class.java)
+                    val profilesValue = valueDataSnap.getValue(GeneralUserInformation::class.java)
 
                     Glide.with(requireContext())
                         .load(profilesValue?.avatar)
@@ -313,7 +312,7 @@ class ChatsFragment : Fragment() {
             "Authorization" to "key=AAAAnB858Xs:APA91bG1VtuWm1hZ8VDE85jy9pdaWiHG_XIXJ8ISqQPN_TRd0bpLI72bqpDgYtufEsEEvUjigNsr4wUPGRtNZz2JZQ1MY0g2G1XxW2o454ttGwxOx09Xemq_KxgE0ixGHCTVrE8KB4Ch"
         )
         retrieveRealtimeDatabaseOnListener(db, "participants/${auth.currentUser?.uid}", requireContext()) { dataSnapshot ->
-            val avatarValue = dataSnapshot.getValue(Profiles::class.java)
+            val avatarValue = dataSnapshot.getValue(GeneralUserInformation::class.java)
             retrieveRealtimeDatabaseOnListener(db, "MedicalMessenger/FcmTokens", requireContext()) { dataKeySnap ->
                 if (avatarValue != null) {
                     val notification = FCMNotification(

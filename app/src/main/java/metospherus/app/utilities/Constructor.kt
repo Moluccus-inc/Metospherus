@@ -2,7 +2,6 @@ package metospherus.app.utilities
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.AlarmManager
 import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
@@ -11,37 +10,27 @@ import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.location.Address
 import android.location.Geocoder
-import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.view.View
-import androidx.annotation.WorkerThread
-import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LiveData
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import metospherus.app.database.localhost.AppDatabase
-import metospherus.app.database.profile_data.Profiles
+import metospherus.app.database.profile_data.GeneralUserInformation
 import metospherus.app.modules.GeneralBrainResponse
 import metospherus.app.modules.GeneralMenstrualCycle
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.apache.http.client.methods.RequestBuilder.post
 import org.json.JSONObject
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
-import kotlin.random.Random
 
 object Constructor {
     const val ACTION_REPLY = "metospherus.app.ACTION_REPLY"
@@ -63,12 +52,12 @@ object Constructor {
         Handler(Looper.myLooper()!!).postDelayed(task, delayMillis)
     }
 
-    suspend fun insertOrUpdateUserProfile(userProfile: Profiles, appDatabase: AppDatabase) {
+    suspend fun insertOrUpdateUserProfile(userProfile: GeneralUserInformation, appDatabase: AppDatabase) {
         withContext(Dispatchers.IO) {
             appDatabase.profileLocal().insertOrUpdateUserPatient(userProfile)
         }
     }
-    suspend fun getUserProfilesFromDatabase(appDatabase: AppDatabase): Profiles? {
+    suspend fun getUserProfilesFromDatabase(appDatabase: AppDatabase): GeneralUserInformation? {
         return appDatabase.profileLocal().getUserPatient()
     }
     suspend fun getMenstrualCyclesFromLocalDatabase(appDatabase: AppDatabase): GeneralMenstrualCycle? {
@@ -252,5 +241,23 @@ object Constructor {
         } else {
             // Handle case where no email client is available
         }
+    }
+
+    fun getDeviceUsageHoursToday(context: Context): Double {
+        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val endTime = System.currentTimeMillis()
+        val startTime = endTime - 24 * 60 * 60 * 1000 // 24 hours ago
+
+        val queryUsageStats = usageStatsManager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY, startTime, endTime
+        )
+
+        var totalUsageTime = 0L
+        for (usageStats in queryUsageStats) {
+            totalUsageTime += usageStats.totalTimeInForeground
+        }
+
+        // Convert totalUsageTime to hours
+        return totalUsageTime / (1000 * 60 * 60).toDouble()
     }
 }

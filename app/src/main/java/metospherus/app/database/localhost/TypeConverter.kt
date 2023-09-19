@@ -2,7 +2,7 @@ package metospherus.app.database.localhost
 
 import androidx.room.TypeConverter
 import com.google.gson.Gson
-import metospherus.app.database.profile_data.Profiles
+import metospherus.app.database.profile_data.GeneralUserInformation
 
 class TypeConverter {
     private val gson = Gson()
@@ -18,63 +18,63 @@ class TypeConverter {
     }
 
     @TypeConverter
-    fun fromMedicalProfessionals(value: Profiles.MedicalProfessionals): String {
+    fun fromMedicalProfessionals(value: GeneralUserInformation.MedicalProfessionals): String {
         return gson.toJson(value)
     }
 
     @TypeConverter
-    fun toMedicalProfessionals(value: String): Profiles.MedicalProfessionals {
-        return gson.fromJson(value, Profiles.MedicalProfessionals::class.java)
+    fun toMedicalProfessionals(value: String): GeneralUserInformation.MedicalProfessionals {
+        return gson.fromJson(value, GeneralUserInformation.MedicalProfessionals::class.java)
     }
 
     @TypeConverter
-    fun fromGeneralDescription(value: Profiles.GeneralDescription): String {
+    fun fromGeneralDescription(value: GeneralUserInformation.GeneralDescription): String {
         return gson.toJson(value)
     }
 
     @TypeConverter
-    fun toGeneralDescription(value: String): Profiles.GeneralDescription {
-        return gson.fromJson(value, Profiles.GeneralDescription::class.java)
+    fun toGeneralDescription(value: String): GeneralUserInformation.GeneralDescription {
+        return gson.fromJson(value, GeneralUserInformation.GeneralDescription::class.java)
     }
 
     @TypeConverter
-    fun fromGeneralHealthInformation(value: Profiles.GeneralHealthInformation): String {
+    fun fromGeneralHealthInformation(value: GeneralUserInformation.GeneralHealthInformation): String {
         return gson.toJson(value)
     }
 
     @TypeConverter
-    fun toGeneralHealthInformation(value: String): Profiles.GeneralHealthInformation {
-        return gson.fromJson(value, Profiles.GeneralHealthInformation::class.java)
+    fun toGeneralHealthInformation(value: String): GeneralUserInformation.GeneralHealthInformation {
+        return gson.fromJson(value, GeneralUserInformation.GeneralHealthInformation::class.java)
     }
 
     @TypeConverter
-    fun fromGeneralSystemInformation(value: Profiles.GeneralSystemInformation): String {
+    fun fromGeneralSystemInformation(value: GeneralUserInformation.GeneralSystemInformation): String {
         return gson.toJson(value)
     }
 
     @TypeConverter
-    fun toGeneralSystemInformation(value: String): Profiles.GeneralSystemInformation {
-        return gson.fromJson(value, Profiles.GeneralSystemInformation::class.java)
+    fun toGeneralSystemInformation(value: String): GeneralUserInformation.GeneralSystemInformation {
+        return gson.fromJson(value, GeneralUserInformation.GeneralSystemInformation::class.java)
     }
 
     @TypeConverter
-    fun fromGeneralDatabaseInformation(value: Profiles.GeneralDatabaseInformation): String {
+    fun fromGeneralDatabaseInformation(value: GeneralUserInformation.GeneralDatabaseInformation): String {
         return gson.toJson(value)
     }
 
     @TypeConverter
-    fun toGeneralDatabaseInformation(value: String): Profiles.GeneralDatabaseInformation {
-        return gson.fromJson(value, Profiles.GeneralDatabaseInformation::class.java)
+    fun toGeneralDatabaseInformation(value: String): GeneralUserInformation.GeneralDatabaseInformation {
+        return gson.fromJson(value, GeneralUserInformation.GeneralDatabaseInformation::class.java)
     }
 
     @TypeConverter
-    fun fromGeneralLegalInformation(value: Profiles.GeneralLegalInformation): String {
+    fun fromGeneralLegalInformation(value: GeneralUserInformation.GeneralLegalInformation): String {
         return gson.toJson(value)
     }
 
     @TypeConverter
-    fun toGeneralLegalInformation(value: String): Profiles.GeneralLegalInformation {
-        return gson.fromJson(value, Profiles.GeneralLegalInformation::class.java)
+    fun toGeneralLegalInformation(value: String): GeneralUserInformation.GeneralLegalInformation {
+        return gson.fromJson(value, GeneralUserInformation.GeneralLegalInformation::class.java)
     }
 }
 

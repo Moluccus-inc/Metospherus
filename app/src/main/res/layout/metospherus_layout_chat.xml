@@ -10,11 +10,11 @@
     tools:context=".fragments.ChatsFragment">
 
     <androidx.appcompat.widget.Toolbar
+        style="@style/Widget.MaterialComponents.Toolbar"
         android:id="@+id/toolbarLayout"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        style="@style/Widget.AppCompat.Toolbar"
         android:background="?android:windowBackground" />
 
     <androidx.recyclerview.widget.RecyclerView

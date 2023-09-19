@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import metospherus.app.R
 import metospherus.app.adaptors.SearchAdaptor
 import metospherus.app.database.localhost.AppDatabase
 import metospherus.app.utilities.Constructor.insertOrUpdateUserCompanionShip
@@ -81,6 +82,7 @@ object GeneralBrain {
             .setPrompt(prompt) // Required
             .setTemperature(0.5f) // Optional, controls the randomness of the output
             .setCandidateCount(1) // Optional, the number of generated messages to return
+            .setTopK(0)
             .build()
     }
 
@@ -117,11 +119,8 @@ object GeneralBrain {
         val discussServiceClient = initializeDiscussServiceClient(appVer)
         discussServiceClient.use { discussionService ->
             val messageContent = discussionService.generateMessage(request).candidatesList.lastOrNull()
-            searchRecyclerView.loadSkeleton {
-                val customShimmer = Shimmer.AlphaHighlightBuilder()
-                    .setDirection(Shimmer.Direction.TOP_TO_BOTTOM)
-                    .build()
-                shimmer(customShimmer)
+            searchRecyclerView.loadSkeleton(R.layout.search_view_layout) {
+                itemCount(3)
             }
             CoroutineScope(Dispatchers.Main).launch {
                 if (messageContent != null) {
@@ -133,7 +132,6 @@ object GeneralBrain {
                         userInput,
                         messageContent.content.toString()
                     )
-                    insertOrUpdateUserCompanionShip(messageComp, appDatabase)
 
                     val responseText = StringBuilder()
                     for (word in words) {
@@ -154,6 +152,7 @@ object GeneralBrain {
                                 responseText.toString().replace("\n\n ", "\n\n"),
                             )
                         )
+                        insertOrUpdateUserCompanionShip(messageComp, appDatabase)
                         searchAdapter.setData(repos)
                         delay(typingDelay)
                     }

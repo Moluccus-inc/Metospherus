@@ -39,15 +39,15 @@ class ScheduledRemindersManager(
             }
 
             val delayInSeconds = TimeUnit.MILLISECONDS.toSeconds(userSelectedDateTime.timeInMillis - todayDateTime.timeInMillis)
-            createWorkRequest(reminderTitle, delayInSeconds)
+            createWorkRequest(reminderTitle,reminderTime, delayInSeconds)
         }
     }
 
-    private fun createWorkRequest(message: String,timeDelayInSeconds: Long  ) {
+    private fun createWorkRequest(message: String, timeSet: String, timeDelayInSeconds: Long  ) {
         val myWorkRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
             .setInitialDelay(timeDelayInSeconds, TimeUnit.SECONDS)
             .setInputData(workDataOf(
-                "title" to message,
+                "title" to "$message @$timeSet" ,
                 "message" to "This is A Reminder to take your $message medicine in time \uD83D\uDE0A",
             ))
             .build()

@@ -45,7 +45,6 @@ fun bottomSheetGeneral(
 ) {
     MaterialDialog(context, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
         customView(R.layout.general_bottom_sheet)
-        cancelOnTouchOutside(false)
         cornerRadius(20f)
 
         lateinit var recyclerViewTracker: RecyclerView

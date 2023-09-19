@@ -34,7 +34,7 @@ android {
         //noinspection EditedTargetSdkVersion
         targetSdk = 34
         versionCode = 1
-        versionName = "1.1.6"
+        versionName = "1.1.7"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -121,7 +121,7 @@ dependencies {
 
     // ML dependencies
     implementation("com.google.cloud:gapic-google-cloud-ai-generativelanguage-v1beta2-java:0.0.0-SNAPSHOT")
-    implementation("io.grpc:grpc-okhttp:1.53.0")
+    implementation("io.grpc:grpc-okhttp:1.56.1")
 
     // firebase
     implementation(platform("com.google.firebase:firebase-bom:32.2.2"))

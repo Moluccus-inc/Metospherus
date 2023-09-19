@@ -7,7 +7,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="5dp">
+        android:layout_margin="10dp">
         <ImageView
             android:id="@+id/closeBottomSheet"
             android:layout_width="30dp"
@@ -43,4 +43,9 @@
         android:id="@+id/medicalPharmacyCategory"
         android:visibility="gone"
         layout="@layout/medical_general_pharmacy"/>
+
+    <include
+        android:visibility="gone"
+        android:id="@+id/medicalHospitalCategory"
+        layout="@layout/medical_category_hospital"/>
 </LinearLayout>

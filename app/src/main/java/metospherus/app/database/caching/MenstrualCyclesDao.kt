@@ -1,10 +1,9 @@
-package metospherus.app.database.localhost
+package metospherus.app.database.caching
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import metospherus.app.database.profile_data.Profiles
 import metospherus.app.modules.GeneralMenstrualCycle
 
 @Dao

@@ -4,142 +4,172 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/custom_dialog_design">
-    <LinearLayout
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp">
-            <ImageView
-                android:id="@+id/closeBottomSheet"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_centerInParent="true"
-                android:src="@drawable/round_close"/>
-
-            <TextView
-                android:id="@+id/titleBottomSheet"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_marginStart="5dp"
-                android:layout_toEndOf="@+id/closeBottomSheet"
-                android:hint="@string/app_name"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <ImageView
-                android:id="@+id/editDocument"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="15dp"
-                android:layout_toStartOf="@+id/deleteDocument"
-                android:src="@drawable/round_edit" />
-
-            <ImageView
-                android:id="@+id/deleteDocument"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_marginEnd="15dp"
-                android:layout_toStartOf="@+id/shareDocument"
-                android:src="@drawable/round_delete" />
-
-            <ImageView
-                android:id="@+id/shareDocument"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerInParent="true"
-                android:src="@drawable/round_share" />
-        </RelativeLayout>
-
+        android:layout_height="wrap_content">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="10dp">
+            android:orientation="vertical"
+            android:padding="5dp">
 
-            <View
-                android:layout_width="2dp"
-                android:layout_height="match_parent"
-                android:background="?android:colorAccent"
-                android:padding="5dp" />
-
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="5dp">
-
-                <TextView
-                    android:id="@+id/documentTitleHolder"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Medical Document Title"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                app:cardCornerRadius="100dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:weightSum="2"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:id="@+id/documentDescription"
-                        android:layout_width="match_parent"
+                    android:orientation="horizontal"
+                    android:weightSum="6">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="0.7"
-                        android:textAlignment="textStart"
-                        android:text="Medical Document description" />
-                    <TextView
-                        android:id="@+id/documentTimeout"
-                        android:layout_width="match_parent"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/addOrSaveDocument"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/round_save"
+                            app:fabCustomSize="45sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="18sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:textAlignment="textEnd"
-                        android:layout_weight="1.3"
-                        android:text="12:30 PM" />
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/markSelectedTextBold"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/round_bold"
+                            app:fabCustomSize="25sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/markSelectedTextItalic"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/round_italic"
+                            app:fabCustomSize="25sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/addBulletDotsTo"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/round_list"
+                            app:fabCustomSize="25sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/alignSelectedTextToTextStart"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/round_notes"
+                            app:fabCustomSize="25sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/alignSelectedTextToTextCenter"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:rotation="-90"
+                            android:src="@drawable/round_notes"
+                            app:fabCustomSize="25sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/alignSelectedTextToTextEnd"
+                            style="@style/Widget.MaterialComponents.FloatingActionButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:rotation="180"
+                            android:src="@drawable/round_notes"
+                            app:fabCustomSize="25sp"
+                            app:fabSize="mini"
+                            app:maxImageSize="16sp" />
+                    </LinearLayout>
+
+
                 </LinearLayout>
-            </LinearLayout>
-        </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.card.MaterialCardView
-            style="@style/Widget.Material3.CardView.Elevated"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp">
-
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/documentImageHolder"
-                android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:scaleType="centerCrop"
-                android:visibility="gone"
-                app:srcCompat="@drawable/holder" />
-        </com.google.android.material.card.MaterialCardView>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="10dp">
-
-            <TextView
-                android:id="@+id/documentsNotesHolder"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/documentInputEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAlignment="textStart"
-                android:textStyle="normal" />
+                android:background="@android:color/transparent"
+                android:elegantTextHeight="true"
+                android:gravity="top"
+                android:minHeight="250dp"
+                android:padding="10dp" />
         </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="20dp"/>
-    </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 </androidx.core.widget.NestedScrollView>

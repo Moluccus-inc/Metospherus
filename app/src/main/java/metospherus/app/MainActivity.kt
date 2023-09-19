@@ -2,17 +2,24 @@ package metospherus.app
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorEventListener2
+import android.hardware.SensorListener
+import android.hardware.SensorManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.SystemClock
 import android.provider.Settings
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
@@ -29,22 +36,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import metospherus.app.database.localhost.AppDatabase
-import metospherus.app.database.profile_data.Profiles
+import metospherus.app.database.profile_data.GeneralUserInformation
 import metospherus.app.databinding.ActivityMainBinding
-import metospherus.app.fragments.ChatsFragment
 import metospherus.app.modules.GeneralReminders
 import metospherus.app.modules.GeneralTemplate
 import metospherus.app.services.NetworkHandler
 import metospherus.app.services.ScheduledRemindersManager
 import metospherus.app.update.UpdateUtil
+import metospherus.app.utilities.Constructor.getDeviceUsageHoursToday
 import metospherus.app.utilities.Constructor.insertOrUpdateUserProfile
+import metospherus.app.utilities.FirebaseConfig
 import metospherus.app.utilities.FirebaseConfig.retrieveRealtimeDatabase
 import metospherus.app.utilities.FirebaseConfig.retrieveRealtimeDatabaseOnListener
 import metospherus.app.utilities.MoluccusToast
+import java.text.SimpleDateFormat
 import kotlin.system.exitProcess
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity() , SensorEventListener {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var navController: NavController
     private lateinit var binding: ActivityMainBinding
@@ -58,6 +67,11 @@ class MainActivity : AppCompatActivity() {
     private val PERMISSIONS_REQUEST_CODE = 1001
 
     private lateinit var metospherus: MoluccusToast
+
+    private lateinit var sensorManager: SensorManager
+    private lateinit var stepCounterSensor: Sensor
+    private var stepCount: Int = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -81,7 +95,8 @@ class MainActivity : AppCompatActivity() {
         if (auth.currentUser?.uid != null) {
             FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    db.getReference("MedicalMessenger/FcmTokens/${auth.currentUser?.uid}").setValue(task.result.toString())
+                    db.getReference("MedicalMessenger/FcmTokens/${auth.currentUser?.uid}")
+                        .setValue(task.result.toString())
                 } else {
                     metospherus.showError("Failed to assign PnT token Reason : ${task.exception?.message}")
                 }
@@ -92,8 +107,21 @@ class MainActivity : AppCompatActivity() {
             networkHandler.isOnline() -> {
                 // Device is online
             }
+
             else -> {
                 // Device is offline
+            }
+        }
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        stepCounterSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)!!
+
+        if (this.stepCounterSensor == null) {
+            auth.currentUser?.uid?.let { userId ->
+                FirebaseConfig.updateRealtimeDatabaseData(
+                    db,
+                    "participants/$userId/generalHealthInformation/stepsRecord",
+                    "Sensor not available"
+                )
             }
         }
     }
@@ -103,6 +131,8 @@ class MainActivity : AppCompatActivity() {
         initializeMedicalIntakeAlertSystem()
         startProfileDetailsListener()
         publicModulesForAllUsers()
+        stepCount = 0
+        sensorManager.registerListener(this, stepCounterSensor, SensorManager.SENSOR_DELAY_NORMAL)
     }
 
     override fun onPause() {
@@ -110,6 +140,7 @@ class MainActivity : AppCompatActivity() {
         initializeMedicalIntakeAlertSystem()
         stopProfileDetailsListener()
         publicModulesForAllUsers()
+        sensorManager.unregisterListener(this)
     }
 
     private fun publicModulesForAllUsers() {
@@ -145,7 +176,7 @@ class MainActivity : AppCompatActivity() {
             auth.currentUser?.uid?.let { userId ->
                 retrieveRealtimeDatabaseOnListener(db, "participants/$userId", this,
                     onDataChange = { snapshot ->
-                        val userProfile = snapshot.getValue(Profiles::class.java)
+                        val userProfile = snapshot.getValue(GeneralUserInformation::class.java)
                         if (userProfile != null) {
                             CoroutineScope(Dispatchers.Default).launch {
                                 insertOrUpdateUserProfile(userProfile, appDatabase)
@@ -166,9 +197,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initializeMedicalIntakeAlertSystem() {
-        auth.currentUser?.let { currentUser ->
+        auth.currentUser?.uid.let { currentUser ->
+            val deviceUsg = getDeviceUsageHoursToday(this)
+            FirebaseConfig.updateRealtimeDatabaseData(
+                db,
+                "participants/$currentUser/generalHealthInformation/deviceUsageTimeRecord",
+                deviceUsg.toString()
+            )
+
             retrieveRealtimeDatabaseOnListener(db,
-                "medicalmodules/userspecific/medicineIntake/${currentUser.uid}",
+                "medicalmodules/userspecific/medicineIntake/${currentUser}",
                 context = this,
                 onDataChange = { snapshot ->
                     val scheduledReminders = mutableListOf<GeneralReminders>()
@@ -205,6 +243,8 @@ class MainActivity : AppCompatActivity() {
                     Manifest.permission.POST_NOTIFICATIONS,
                     Manifest.permission.WAKE_LOCK,
                     Manifest.permission.VIBRATE,
+                    Manifest.permission.ACTIVITY_RECOGNITION,
+                    Manifest.permission.REQUEST_INSTALL_PACKAGES,
                 ).toString()
             ) != PackageManager.PERMISSION_GRANTED -> {
                 requestPermissions(
@@ -215,17 +255,14 @@ class MainActivity : AppCompatActivity() {
                         Manifest.permission.POST_NOTIFICATIONS,
                         Manifest.permission.WAKE_LOCK,
                         Manifest.permission.VIBRATE,
+                        Manifest.permission.ACTIVITY_RECOGNITION,
+                        Manifest.permission.REQUEST_INSTALL_PACKAGES
                     ),
                     PERMISSIONS_REQUEST_CODE
                 )
                 return
             }
         }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        // TODO: Remove
     }
 
     @Deprecated("Deprecated in Java")
@@ -271,6 +308,34 @@ class MainActivity : AppCompatActivity() {
                 updateUtil.updateApp {}
             }
         }
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    override fun onSensorChanged(p0: SensorEvent?) {
+        p0 ?: return
+
+        val lastDeviceBootTimeInMillis = System.currentTimeMillis() - SystemClock.elapsedRealtime()
+        val sensorEventTimeInNanos = p0.timestamp // The number of nanosecond passed since the time of last boot
+        val sensorEventTimeInMillis = sensorEventTimeInNanos / 1000_000
+
+        val actualSensorEventTimeInMillis = lastDeviceBootTimeInMillis + sensorEventTimeInMillis
+        val displayDateStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(actualSensorEventTimeInMillis)
+        println("Sensor event is triggered at $displayDateStr")
+
+        p0.values.firstOrNull()?.let {
+            auth.currentUser?.uid?.let { userId ->
+                FirebaseConfig.updateRealtimeDatabaseData(
+                    db,
+                    "participants/$userId/generalHealthInformation/stepsRecord",
+                    it.toString()
+                )
+            }
+        }
+
+    }
+
+    override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
+        // Not needed for the Step Counter Sensor
     }
 
     /** override fun onSupportNavigateUp(): Boolean {

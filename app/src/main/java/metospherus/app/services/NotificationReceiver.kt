@@ -10,7 +10,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.ktx.Firebase
 import metospherus.app.App
-import metospherus.app.database.profile_data.Profiles
+import metospherus.app.database.profile_data.GeneralUserInformation
 import metospherus.app.modules.FCMNotification
 import metospherus.app.modules.FCMNotificationData
 import metospherus.app.modules.FCMResponse
@@ -84,7 +84,7 @@ class NotificationReceiver : BroadcastReceiver() {
             "participants/${auth.currentUser?.uid}",
             App.instance
         ) { dataSnapshot ->
-            val avatarValue = dataSnapshot.getValue(Profiles::class.java)
+            val avatarValue = dataSnapshot.getValue(GeneralUserInformation::class.java)
             FirebaseConfig.retrieveRealtimeDatabaseOnListener(
                 db,
                 "MedicalMessenger/FcmTokens",

@@ -28,8 +28,9 @@ import metospherus.app.R
 import metospherus.app.adaptors.MedicalDocumentsAdaptor
 import metospherus.app.adaptors.MedicalProfessionsAdaptor
 import metospherus.app.categories.GeneralStatistics
+import metospherus.app.categories.HospitalsCategory
 import metospherus.app.categories.PharmacyCategory
-import metospherus.app.database.profile_data.Profiles
+import metospherus.app.database.profile_data.GeneralUserInformation
 import metospherus.app.modules.GeneralCategory
 import metospherus.app.modules.GeneralDocuments
 import metospherus.app.utilities.Constructor.show
@@ -90,6 +91,9 @@ class InitializeBottomSheetCategories {
                         MoluccusToast(context).showInformation("Please Login In Order To Use This Feature!!")
                     }
                 }
+                "Hospital" -> {
+                    HospitalsCategory().initializeHospitalsCategory(this, auth, db)
+                }
 
                 else -> {
                     dismiss()
@@ -117,13 +121,10 @@ class InitializeBottomSheetCategories {
             val queries = searchDocuments.text
             if (!queries.isNullOrEmpty()) {
                 val matchingResults = medicalRec.filter { result ->
-                    result.documentShortDescription.orEmpty().contains(
+                    result.formattedText.orEmpty().contains(
                         queries.toString(),
                         ignoreCase = true
-                    ) || result.documentTitle.orEmpty().contains(
-                        queries.toString(),
-                        ignoreCase = true
-                    ) || result.documentDate.orEmpty().contains(
+                    ) || result.time.orEmpty().contains(
                         queries.toString(),
                         ignoreCase = true
                     )
@@ -189,13 +190,13 @@ class InitializeBottomSheetCategories {
         }
 
         view.onPreShow {
-            val mdProfessionalsList = mutableListOf<Profiles>()
+            val mdProfessionalsList = mutableListOf<GeneralUserInformation>()
             retrieveRealtimeDatabaseOnListener(db, "participants", view.windowContext) { snapshot ->
                 mdProfessionalsList.clear()
                 for (snapshotItem in snapshot.children) {
                     val checkIfUserIsAccountTypeDoctor = snapshotItem.child("accountType").getValue(String::class.java)
                     if (checkIfUserIsAccountTypeDoctor == "doctor" || checkIfUserIsAccountTypeDoctor == "nurse") {
-                        val mdProfessionalsData = snapshotItem.getValue(Profiles::class.java)
+                        val mdProfessionalsData = snapshotItem.getValue(GeneralUserInformation::class.java)
                         mdProfessionalsData?.let { mdProfessionalsList.add(it) }
                     }
                 }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
 import android.widget.RelativeLayout
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.MaterialDialog
@@ -27,7 +28,9 @@ import metospherus.app.R
 import metospherus.app.adaptors.MedicineIntakeAdaptor
 import metospherus.app.modules.GeneralPills
 import metospherus.app.utilities.Constructor.show
+import metospherus.app.utilities.FirebaseConfig.updateRealtimeDatabaseData
 import metospherus.app.utilities.MoluccusToast
+import metospherus.app.utilities.updateFirebaseDatabase
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -152,12 +155,9 @@ class MedicalIntake {
             }
         }
 
-        recyclerViewTracker.layoutManager =
-            LinearLayoutManager(
-                context,
-                LinearLayoutManager.VERTICAL,
-                false
-            )
+        recyclerViewTracker.layoutManager = GridLayoutManager(
+            context, 2
+        )
         recyclerViewTracker.isNestedScrollingEnabled = true
         recyclerViewTracker.setHasFixedSize(true)
 
@@ -173,15 +173,15 @@ class MedicalIntake {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         moduleTemps.clear()
                         for (dataSnapshot in snapshot.children) {
-                            val modulesData =
-                                dataSnapshot.getValue(GeneralPills::class.java)
+                            val modulesData = dataSnapshot.getValue(GeneralPills::class.java)
                             medicineCount.text = snapshot.childrenCount.toString()
+                            updateRealtimeDatabaseData(db, "participants/${auth.currentUser?.uid}/generalHealthInformation/pillsAvailableRecord", snapshot.childrenCount.toString())
                             if (modulesData != null) {
                                 modulesData.pushkey = dataSnapshot.key ?: ""
                                 moduleTemps.add(modulesData)
                             }
                         }
-                        medicineIntakeAdapter.setData(moduleTemps)
+                        medicineIntakeAdapter.setData(moduleTemps.asReversed())
                         recyclerViewTracker.adapter = medicineIntakeAdapter
                     }
 

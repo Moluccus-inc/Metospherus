@@ -11,6 +11,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.FragmentActivity
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
@@ -42,6 +43,7 @@ import metospherus.app.utilities.Constructor.hide
 import metospherus.app.utilities.Constructor.show
 import java.util.concurrent.TimeUnit
 
+@SuppressLint("SetTextI18n")
 fun initBottomSheetsIfNeeded(
     context: Context,
     activity: FragmentActivity,
@@ -52,7 +54,7 @@ fun initBottomSheetsIfNeeded(
         customView(R.layout.authentication_layout)
         cornerRadius(20f)
         cancelOnTouchOutside(false)
-        setPeekHeight(Int.MAX_VALUE)
+        setPeekHeight(Int.MIN_VALUE)
 
         lateinit var resendToken: PhoneAuthProvider.ForceResendingToken
         lateinit var storedVerificationId: String
@@ -65,15 +67,13 @@ fun initBottomSheetsIfNeeded(
         val codeInputLayout = view.findViewById<LinearLayoutCompat>(R.id.codeInputLayout)
         val otpView = view.findViewById<OtpTextView>(R.id.otp_view)
         val enterOTP = view.findViewById<TextView>(R.id.enterOTP)
-        val createAccountConsent =
-            view.findViewById<MaterialCheckBox>(R.id.createAccountConsent)
+        val createAccountConsent = view.findViewById<MaterialCheckBox>(R.id.createAccountConsent)
         val resendTokeOpt = view.findViewById<TextView>(R.id.resendTokeOpt)
 
         val phoneNumberButton = view.findViewById<MaterialButton>(R.id.phoneNumberButton)
         val completeVerification = view.findViewById<MaterialButton>(R.id.completeVerification)
         val phoneNumberInputs = view.findViewById<EditText>(R.id.phoneNumberInput)
-        val countryCodePickerLayout =
-            view.findViewById<MaterialCardView>(R.id.countryCodePickerLayout)
+        val countryCodePickerLayout = view.findViewById<MaterialCardView>(R.id.countryCodePickerLayout)
 
         phoneNumberButton.hide()
         createAccountConsent.isChecked = false
@@ -121,36 +121,16 @@ fun initBottomSheetsIfNeeded(
                 val initialPhoneCode = "+${selectedCountry?.phoneCode}"
                 phoneNumberInputs.setText(initialPhoneCode)
                 phoneNumberInputs.setSelection(initialPhoneCode.length)
-                phoneNumberInputs.addTextChangedListener(object : TextWatcher {
-                    override fun beforeTextChanged(
-                        s: CharSequence?,
-                        start: Int,
-                        count: Int,
-                        after: Int
-                    ) {
+                phoneNumberInputs.doAfterTextChanged {
+                    val inputText = it.toString()
+                    val countryCode = "+${selectedCountry?.phoneCode}"
+                    if (inputText.startsWith(countryCode)) {
+                        // The country code is intact, do nothing
+                    } else {
+                        phoneNumberInputs.setText(countryCode)
+                        phoneNumberInputs.setSelection(countryCode.length)
                     }
-
-                    override fun onTextChanged(
-                        s: CharSequence?,
-                        start: Int,
-                        before: Int,
-                        count: Int
-                    ) {
-                    }
-
-                    override fun afterTextChanged(editable: Editable?) {
-                        val inputText = editable.toString()
-                        val countryCode = "+${selectedCountry?.phoneCode}"
-
-                        if (inputText.startsWith(countryCode)) {
-                            // The country code is intact, do nothing
-                        } else {
-                            phoneNumberInputs.setText(countryCode)
-                            phoneNumberInputs.setSelection(countryCode.length)
-                        }
-                    }
-                })
-
+                }
             }
         }
 
@@ -243,6 +223,7 @@ fun initBottomSheetsIfNeeded(
                                                         override fun onDataChange(snapshot: DataSnapshot) {
                                                             if (snapshot.exists()) {
                                                                 dismiss()
+                                                                activity.recreate()
                                                                 MoluccusToast(windowContext).showSuccess(
                                                                     "Welcome Back To Metospherus A Comprehensive Medical System."
                                                                 )
@@ -252,6 +233,7 @@ fun initBottomSheetsIfNeeded(
                                                                 )
                                                                     .addOnSuccessListener {
                                                                         dismiss()
+                                                                        activity.recreate()
                                                                         MoluccusToast(
                                                                             windowContext
                                                                         ).showSuccess("Welcome To Metospherus A Comprehensive Medical System")

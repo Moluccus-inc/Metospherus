@@ -13,5 +13,8 @@
     <scriptDefinition className="org.jetbrains.kotlin.idea.core.script.StandardIdeScriptDefinition" definitionName="Kotlin Script">
       <order>3</order>
     </scriptDefinition>
+    <scriptDefinition className="org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate" definitionName="KotlinBuildScript">
+      <order>2147483647</order>
+    </scriptDefinition>
   </component>
 </project>

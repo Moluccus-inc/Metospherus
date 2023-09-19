@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 
 @Keep
 @Entity(tableName = "USER_PROFILE")
-data class Profiles(
+data class GeneralUserInformation(
     @PrimaryKey val id: Long = 0, // Provide a default value for id
     val accountType: String? = null,
     val email: String? = null,
@@ -46,7 +46,25 @@ data class Profiles(
         val weightRecord: String? = null,
         val bloodGroupRecord: String? = null,
         val allergiesRecord: String? = null,
-        val genderIdRecord: String? = null
+        val genderIdRecord: String? = null,
+        val familyIdRecord: String? = null,
+        val heartPulseRecord: String? = null,
+        val temperatureRecord: String? = null,
+        val sleepTimeRecord: String? = null,
+        val pillsAvailableRecord: String? = null,
+        val stepsRecord: String? = null,
+        val timeTakenRecord: String? = null,
+        val deviceUsageTimeRecord: String? = null,
+        val moodsRecord: MoodsRecordInfo = MoodsRecordInfo()
+    )
+    data class MoodsRecordInfo(
+        val monday: Int? = 5,
+        val tuesday: Int? = 5,
+        val wednesday: Int? = 5,
+        val thursday: Int? = 5,
+        val friday: Int? = 5,
+        val saturday: Int? = 5,
+        val sunday: Int? = 5
     )
     data class GeneralSystemInformation(
         val activeTimeStatus: String?= null,

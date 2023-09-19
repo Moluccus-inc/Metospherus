@@ -16,7 +16,7 @@ import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import metospherus.app.R
-import metospherus.app.database.profile_data.Profiles
+import metospherus.app.database.profile_data.GeneralUserInformation
 import metospherus.app.utilities.MoluccusToast
 
 class MedicalProfessionsAdaptor(
@@ -26,10 +26,10 @@ class MedicalProfessionsAdaptor(
     private val findNavController: NavController,
     private val materialDialog: MaterialDialog
 ) : RecyclerView.Adapter<MedicalProfessionsAdaptor.ViewHolder>() {
-    private val serviceList: MutableList<Profiles> = mutableListOf()
+    private val serviceList: MutableList<GeneralUserInformation> = mutableListOf()
 
     @SuppressLint("NotifyDataSetChanged")
-    fun setData(trackerInstance: MutableList<Profiles>) {
+    fun setData(trackerInstance: MutableList<GeneralUserInformation>) {
         serviceList.clear()
         serviceList.addAll(trackerInstance)
         notifyDataSetChanged()
@@ -37,7 +37,7 @@ class MedicalProfessionsAdaptor(
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         @SuppressLint("NewApi")
-        fun bind(generalTemplate: Profiles, context: Context) {
+        fun bind(generalTemplate: GeneralUserInformation, context: Context) {
             itemView.findViewById<TextView>(R.id.medicalNameHolder).text = generalTemplate.generalDescription.usrPreferedName
             itemView.findViewById<TextView>(R.id.medicalAboutHolder).text = generalTemplate.medicalProfessionals.about
             itemView.findViewById<TextView>(R.id.medicalSpacificationHolder).text = generalTemplate.medicalProfessionals.medicalProfessionType
